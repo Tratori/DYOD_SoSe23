@@ -1,12 +1,34 @@
 #include "dictionary_segment.hpp"
-
+#include "fixed_width_integer_vector.hpp"
 #include "utils/assert.hpp"
+#include "value_segment.hpp"
 
 namespace opossum {
 
 template <typename T>
 DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& abstract_segment) {
-  // Implementation goes here
+  // creating dictionary
+  auto value_segment = std::dynamic_pointer_cast<ValueSegment<T>>(abstract_segment);
+  std::vector<T> values = value_segment->values();
+  std::sort(values.begin(), values.end());
+  auto last_distinct = std::unique(values.begin(), values.end());
+  values.erase(last_distinct, values.end());
+  _dictionary = values;
+
+  // creating lookup
+  std::unordered_map<T, ValueID> inverted_dictionary;
+  u_int32_t dict_size = _dictionary.size(); 
+  for(u_int32_t dict_key = 0; dict_key < dict_size; dict_key++){
+    inverted_dictionary.insert({_dictionary[dict_key], ValueID{dict_key}});
+  }
+
+  // initialize attribute vector with size of current segment
+  _attribute_vector = std::make_shared<FixedWidthIntegerVector>(abstract_segment->size());
+  // filling attribute vector with index of values
+  int values_size = values.size(); 
+  for(int val_index = 0; val_index < values_size; val_index++){
+    _attribute_vector->set(val_index, inverted_dictionary[values[val_index]]);
+  }
 }
 
 template <typename T>
