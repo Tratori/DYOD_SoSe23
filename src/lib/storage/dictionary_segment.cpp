@@ -40,7 +40,7 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
 
   // filling attribute vector with index of values
   for(ChunkOffset val_index = 0; val_index < vector_size; val_index++){
-    if(value_segment->null_values()[val_index]){
+    if(value_segment->is_nullable() && value_segment->null_values()[val_index]){
       _attribute_vector->set(val_index, null_value_id());
     } else {
       _attribute_vector->set(val_index, inverted_dictionary[values[val_index]]);
@@ -96,7 +96,12 @@ ValueID DictionarySegment<T>::null_value_id() const {
 template <typename T>
 const T DictionarySegment<T>::value_of_value_id(const ValueID value_id) const {
   // Implementation goes here
-  Fail("Implementation is missing.");
+  if(value_id == null_value_id()){
+    throw std::logic_error("Value is null");
+  }
+
+  return _dictionary[value_id];
+  // Fail("Implementation is missing.");
 }
 
 template <typename T>
