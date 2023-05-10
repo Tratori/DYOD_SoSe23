@@ -3,14 +3,14 @@
 namespace opossum {
 
 FixedWidthIntegerVector::FixedWidthIntegerVector(size_t size) {
-  // TODO: what should be our default value here? 
-  // do we want to store a Vector of ValueIDs instead of u_int32_t? 
-  _attribute_vector = std::vector<u_int32_t>(size, -1); 
+  // TODO(Fabian,Robert): what should be our default value here?
+  // do we want to store a Vector of ValueIDs instead of u_int32_t?
+  _attribute_vector = std::vector<u_int32_t>(size, -1);
 }
 
 ValueID FixedWidthIntegerVector::get(const size_t index) const {
-  if(index >= _attribute_vector.size()){
-    throw std::logic_error("Index out of bounds"); 
+  if (index >= _attribute_vector.size()) {
+    throw std::logic_error("Index out of bounds");
   }
   return ValueID{_attribute_vector[index]};
 }
@@ -18,10 +18,10 @@ ValueID FixedWidthIntegerVector::get(const size_t index) const {
 // Sets the value id at a given position.
 void FixedWidthIntegerVector::set(const size_t index, const ValueID value_id) {
   // Do we really want this check here or would DebugAssert be enough? (Same for the getter)
-  if(index >= _attribute_vector.size()){
-    throw std::logic_error("Index out of bounds"); 
+  if (index >= _attribute_vector.size()) {
+    throw std::logic_error("Index out of bounds");
   }
-  _attribute_vector[index] = value_id; 
+  _attribute_vector[index] = value_id;
 }
 
 // Returns the number of values.

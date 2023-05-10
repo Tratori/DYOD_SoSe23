@@ -1,7 +1,7 @@
 #include "table.hpp"
+#include "dictionary_segment.hpp"
 #include "resolve_type.hpp"
 #include "utils/assert.hpp"
-#include "dictionary_segment.hpp"
 
 namespace opossum {
 
@@ -50,11 +50,11 @@ void Table::create_new_chunk() {
 }
 
 void Table::append(const std::vector<AllTypeVariant>& values) {
-  auto is_dictionary_encoded = false; 
+  auto is_dictionary_encoded = false;
   resolve_data_type(_column_types[0], [this, &is_dictionary_encoded](const auto data_type_t) {
     using ColumnDataType = typename decltype(data_type_t)::type;
     auto segment = _chunks.back()->get_segment(ColumnID{0});
-    is_dictionary_encoded = static_cast<bool>(std::dynamic_pointer_cast<DictionarySegment<ColumnDataType>>(segment)); 
+    is_dictionary_encoded = static_cast<bool>(std::dynamic_pointer_cast<DictionarySegment<ColumnDataType>>(segment));
   });
 
   if (_chunks.back()->size() == _target_chunk_size || is_dictionary_encoded) {
@@ -130,15 +130,15 @@ std::shared_ptr<const Chunk> Table::get_chunk(ChunkID chunk_id) const {
 }
 
 void Table::compress_chunk(const ChunkID chunk_id) {
-  // TODO: Make multithreaded
+  // TODO(anyone): Make multithreaded
   auto compressed_chunk = std::make_shared<Chunk>();
 
-  for(auto col_id = ColumnID{0}; col_id < column_count(); col_id++){
+  for (auto col_id = ColumnID{0}; col_id < column_count(); col_id++) {
     resolve_data_type(_column_types[col_id], [&](const auto data_type_t) {
       using ColumnDataType = typename decltype(data_type_t)::type;
-      auto value_segment = get_chunk(chunk_id)->get_segment(col_id); 
-      auto dictionary_segment = std::make_shared<DictionarySegment<ColumnDataType>>(value_segment); 
-      compressed_chunk->add_segment(dictionary_segment); 
+      auto value_segment = get_chunk(chunk_id)->get_segment(col_id);
+      auto dictionary_segment = std::make_shared<DictionarySegment<ColumnDataType>>(value_segment);
+      compressed_chunk->add_segment(dictionary_segment);
     });
   }
 
