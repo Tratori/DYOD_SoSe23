@@ -103,7 +103,7 @@ TEST_F(StorageTableTest, AppendNullValues) {
 
 TEST_F(StorageTableTest, CompressChunk) {
   // Not implemented yet
-  EXPECT_ANY_THROW(table.compress_chunk(ChunkID{0}));
+  table.compress_chunk(ChunkID{0});
 }
 
 TEST_F(StorageTableTest, SegmentsNullable) {

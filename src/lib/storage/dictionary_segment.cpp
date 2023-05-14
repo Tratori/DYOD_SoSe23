@@ -2,6 +2,7 @@
 #include "fixed_width_integer_vector.hpp"
 #include "utils/assert.hpp"
 #include "value_segment.hpp"
+#include "type_cast.hpp"
 
 namespace opossum {
 
@@ -108,26 +109,43 @@ const T DictionarySegment<T>::value_of_value_id(const ValueID value_id) const {
 
 template <typename T>
 ValueID DictionarySegment<T>::lower_bound(const T value) const {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  auto lower_bound = std::lower_bound(_dictionary.begin(), _dictionary.end(), value); 
+  if(lower_bound == _dictionary.end()){
+    return INVALID_VALUE_ID;
+  }
+  return static_cast<ValueID>(lower_bound - _dictionary.begin()); 
 }
 
 template <typename T>
 ValueID DictionarySegment<T>::lower_bound(const AllTypeVariant& value) const {
+  // TODO(anyone): Actually i dont know if this is the desired behaviour...
+  if(variant_is_null(value)){
+    return INVALID_VALUE_ID; 
+  }
+  return lower_bound(type_cast<T> (value)); 
+
   // Implementation goes here
-  Fail("Implementation is missing.");
+  // Fail("Implementation is missing.");
 }
 
 template <typename T>
 ValueID DictionarySegment<T>::upper_bound(const T value) const {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  auto upper_bound = std::upper_bound(_dictionary.begin(), _dictionary.end(), value); 
+  if(upper_bound == _dictionary.end()){
+    return INVALID_VALUE_ID;
+  }
+  return static_cast<ValueID>(upper_bound - _dictionary.begin()); 
 }
 
 template <typename T>
 ValueID DictionarySegment<T>::upper_bound(const AllTypeVariant& value) const {
   // Implementation goes here
-  Fail("Implementation is missing.");
+  // Fail("Implementation is missing.");
+  // TODO(anyone): Actually i dont know if this is the desired behaviour...
+  if(variant_is_null(value)){
+    return INVALID_VALUE_ID; 
+  }
+  return upper_bound(type_cast<T>(value)); 
 }
 
 template <typename T>
