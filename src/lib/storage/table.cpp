@@ -65,11 +65,11 @@ ColumnCount Table::column_count() const {
 
 uint64_t Table::row_count() const {
   // Chunks are not always full.
-  auto row_count = uint64_t{0}; 
-  for(auto chunk : _chunks){
-    row_count += chunk->size(); 
-  }  
-  return row_count; 
+  auto row_count = uint64_t{0};
+  for (auto chunk : _chunks) {
+    row_count += chunk->size();
+  }
+  return row_count;
 }
 
 ChunkID Table::chunk_count() const {

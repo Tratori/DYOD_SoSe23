@@ -1,8 +1,8 @@
 #include "dictionary_segment.hpp"
 #include "fixed_width_integer_vector.hpp"
+#include "type_cast.hpp"
 #include "utils/assert.hpp"
 #include "value_segment.hpp"
-#include "type_cast.hpp"
 
 namespace opossum {
 
@@ -32,24 +32,20 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
 
   // creating lookup
   std::unordered_map<T, ValueID> inverted_dictionary;
-  auto  dict_size = _dictionary.size();
+  auto dict_size = _dictionary.size();
   for (u_int32_t dict_key = 0; dict_key < dict_size; dict_key++) {
     inverted_dictionary.insert({_dictionary[dict_key], ValueID{dict_key}});
   }
 
   auto vector_size = abstract_segment->size();
   // -1 because we count from 0.
-  if(dict_size - 1 <= std::numeric_limits<u_int8_t>::max()){
+  if (dict_size - 1 <= std::numeric_limits<u_int8_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int8_t>>(vector_size);
-  } 
-  else if (dict_size - 1 <= std::numeric_limits<u_int16_t>::max())
-  {
+  } else if (dict_size - 1 <= std::numeric_limits<u_int16_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int16_t>>(vector_size);
-  }
-  else if (dict_size - 1 <= std::numeric_limits<u_int32_t>::max())
-  {
+  } else if (dict_size - 1 <= std::numeric_limits<u_int32_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(vector_size);
-  } 
+  }
 
   // filling attribute vector with index of values
   for (ChunkOffset val_index = 0; val_index < vector_size; val_index++) {
@@ -119,20 +115,20 @@ const T DictionarySegment<T>::value_of_value_id(const ValueID value_id) const {
 
 template <typename T>
 ValueID DictionarySegment<T>::lower_bound(const T value) const {
-  auto lower_bound = std::lower_bound(_dictionary.begin(), _dictionary.end(), value); 
-  if(lower_bound == _dictionary.end()){
+  auto lower_bound = std::lower_bound(_dictionary.begin(), _dictionary.end(), value);
+  if (lower_bound == _dictionary.end()) {
     return INVALID_VALUE_ID;
   }
-  return static_cast<ValueID>(lower_bound - _dictionary.begin()); 
+  return static_cast<ValueID>(lower_bound - _dictionary.begin());
 }
 
 template <typename T>
 ValueID DictionarySegment<T>::lower_bound(const AllTypeVariant& value) const {
   // TODO(anyone): Actually i dont know if this is the desired behaviour...
-  if(variant_is_null(value)){
-    return INVALID_VALUE_ID; 
+  if (variant_is_null(value)) {
+    return INVALID_VALUE_ID;
   }
-  return lower_bound(type_cast<T> (value)); 
+  return lower_bound(type_cast<T>(value));
 
   // Implementation goes here
   // Fail("Implementation is missing.");
@@ -140,11 +136,11 @@ ValueID DictionarySegment<T>::lower_bound(const AllTypeVariant& value) const {
 
 template <typename T>
 ValueID DictionarySegment<T>::upper_bound(const T value) const {
-  auto upper_bound = std::upper_bound(_dictionary.begin(), _dictionary.end(), value); 
-  if(upper_bound == _dictionary.end()){
+  auto upper_bound = std::upper_bound(_dictionary.begin(), _dictionary.end(), value);
+  if (upper_bound == _dictionary.end()) {
     return INVALID_VALUE_ID;
   }
-  return static_cast<ValueID>(upper_bound - _dictionary.begin()); 
+  return static_cast<ValueID>(upper_bound - _dictionary.begin());
 }
 
 template <typename T>
@@ -152,10 +148,10 @@ ValueID DictionarySegment<T>::upper_bound(const AllTypeVariant& value) const {
   // Implementation goes here
   // Fail("Implementation is missing.");
   // TODO(anyone): Actually i dont know if this is the desired behaviour...
-  if(variant_is_null(value)){
-    return INVALID_VALUE_ID; 
+  if (variant_is_null(value)) {
+    return INVALID_VALUE_ID;
   }
-  return upper_bound(type_cast<T>(value)); 
+  return upper_bound(type_cast<T>(value));
 }
 
 template <typename T>

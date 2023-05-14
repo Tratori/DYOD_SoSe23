@@ -1,5 +1,6 @@
 #include "fixed_width_integer_vector.hpp"
 #include "all_type_variant.hpp"
+
 namespace opossum {
 
 template <typename T>
@@ -36,10 +37,10 @@ size_t FixedWidthIntegerVector<T>::size() const {
 // Returns the width of biggest value id in bytes.
 template <typename T>
 AttributeVectorWidth FixedWidthIntegerVector<T>::width() const {
-  return AttributeVectorWidth{ sizeof(T) };
+  return AttributeVectorWidth{sizeof(T)};
 }
 
-template class FixedWidthIntegerVector<u_int8_t>; 
-template class FixedWidthIntegerVector<u_int16_t>; 
+template class FixedWidthIntegerVector<u_int8_t>;
+template class FixedWidthIntegerVector<u_int16_t>;
 template class FixedWidthIntegerVector<u_int32_t>;
 }  // namespace opossum

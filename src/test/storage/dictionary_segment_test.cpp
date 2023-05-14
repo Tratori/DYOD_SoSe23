@@ -68,8 +68,7 @@ TEST_F(StorageDictionarySegmentTest, LowerUpperBound) {
   EXPECT_EQ(dict_segment->upper_bound(15), INVALID_VALUE_ID);
 }
 
-
-std::shared_ptr<DictionarySegment<int32_t>> create_dictionary_segment(int32_t number_elements){
+std::shared_ptr<DictionarySegment<int32_t>> create_dictionary_segment(int32_t number_elements) {
   std::shared_ptr<ValueSegment<int32_t>> value_segment_int{std::make_shared<ValueSegment<int32_t>>()};
   for (auto value = int32_t{0}; value < number_elements; ++value) {
     value_segment_int->append(value);
@@ -84,18 +83,20 @@ std::shared_ptr<DictionarySegment<int32_t>> create_dictionary_segment(int32_t nu
 }
 
 TEST_F(StorageDictionarySegmentTest, CorrectWidth) {
-  auto dict_segment = create_dictionary_segment(10); 
-  EXPECT_EQ(dict_segment->estimate_memory_usage(), 10 * sizeof(u_int32_t) + 10 * sizeof(u_int8_t)); 
+  auto dict_segment = create_dictionary_segment(10);
+  EXPECT_EQ(dict_segment->estimate_memory_usage(), 10 * sizeof(u_int32_t) + 10 * sizeof(u_int8_t));
 
-  dict_segment = create_dictionary_segment(257); 
-  EXPECT_EQ(dict_segment->estimate_memory_usage(), 257 * sizeof(u_int32_t) + 257 * sizeof(u_int16_t)); 
+  dict_segment = create_dictionary_segment(257);
+  EXPECT_EQ(dict_segment->estimate_memory_usage(), 257 * sizeof(u_int32_t) + 257 * sizeof(u_int16_t));
 
-  dict_segment = create_dictionary_segment(256*256); 
-  EXPECT_EQ(dict_segment->estimate_memory_usage(), 256*256 * sizeof(u_int32_t) + 256*256 * sizeof(u_int16_t)); 
+  dict_segment = create_dictionary_segment(256 * 256);
+  EXPECT_EQ(dict_segment->estimate_memory_usage(), 256 * 256 * sizeof(u_int32_t) + 256 * 256 * sizeof(u_int16_t));
 
-  dict_segment = create_dictionary_segment(256*256 + 1); 
-  EXPECT_EQ(dict_segment->estimate_memory_usage(), (256*256 + 1) * sizeof(u_int32_t) + (256*256 + 1) * sizeof(u_int32_t)); 
+  dict_segment = create_dictionary_segment(256 * 256 + 1);
+  EXPECT_EQ(dict_segment->estimate_memory_usage(),
+            (256 * 256 + 1) * sizeof(u_int32_t) + (256 * 256 + 1) * sizeof(u_int32_t));
 }
+
 // TODO(student): You should add some more tests here (full coverage would be appreciated) and possibly in other files.
 
 }  // namespace opossum

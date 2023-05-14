@@ -1,10 +1,9 @@
 #pragma once
 
 #include "abstract_attribute_vector.hpp"
+#include "abstract_segment.hpp"
 #include "types.hpp"
 #include "vector"
-#include "abstract_segment.hpp"
-
 
 namespace opossum {
 
