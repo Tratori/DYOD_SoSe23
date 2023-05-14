@@ -32,14 +32,24 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
 
   // creating lookup
   std::unordered_map<T, ValueID> inverted_dictionary;
-  u_int32_t dict_size = _dictionary.size();
+  auto  dict_size = _dictionary.size();
   for (u_int32_t dict_key = 0; dict_key < dict_size; dict_key++) {
     inverted_dictionary.insert({_dictionary[dict_key], ValueID{dict_key}});
   }
 
   auto vector_size = abstract_segment->size();
-  // initialize attribute vector with size of current segment
-  _attribute_vector = std::make_shared<FixedWidthIntegerVector>(vector_size);
+  // -1 because we count from 0.
+  if(dict_size - 1 <= std::numeric_limits<u_int8_t>::max()){
+    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int8_t>>(vector_size);
+  } 
+  else if (dict_size - 1 <= std::numeric_limits<u_int16_t>::max())
+  {
+    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int16_t>>(vector_size);
+  }
+  else if (dict_size - 1 <= std::numeric_limits<u_int32_t>::max())
+  {
+    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(vector_size);
+  } 
 
   // filling attribute vector with index of values
   for (ChunkOffset val_index = 0; val_index < vector_size; val_index++) {
@@ -163,7 +173,7 @@ ChunkOffset DictionarySegment<T>::size() const {
 
 template <typename T>
 size_t DictionarySegment<T>::estimate_memory_usage() const {
-  return size_t{};
+  return (_dictionary.size() * sizeof(T)) + (_attribute_vector->size() * _attribute_vector->width());
 }
 
 EXPLICITLY_INSTANTIATE_DATA_TYPES(DictionarySegment);

@@ -3,9 +3,12 @@
 #include "abstract_attribute_vector.hpp"
 #include "types.hpp"
 #include "vector"
+#include "abstract_segment.hpp"
+
 
 namespace opossum {
 
+template <typename T>
 class FixedWidthIntegerVector : public AbstractAttributeVector {
  public:
   explicit FixedWidthIntegerVector(size_t size);
@@ -22,7 +25,7 @@ class FixedWidthIntegerVector : public AbstractAttributeVector {
   AttributeVectorWidth width() const;
 
  protected:
-  std::vector<u_int32_t> _attribute_vector;
+  std::vector<T> _attribute_vector;
 };
 
 }  // namespace opossum
