@@ -33,10 +33,6 @@ void Table::add_column(const std::string& name, const std::string& type, const b
 }
 
 void Table::create_new_chunk() {
-  if (_chunks.back()->size() < _target_chunk_size) {
-    throw std::logic_error("It is not allowed to add a new chunk if the last chunk is not full yet.");
-  }
-
   _chunks.emplace_back(std::make_shared<Chunk>());
 
   size_t num_columns = _column_types.size();
@@ -68,8 +64,12 @@ ColumnCount Table::column_count() const {
 }
 
 uint64_t Table::row_count() const {
-  // This is based on the assumption that all but the last chunk contain exactly _target_chunk_size values.
-  return (chunk_count() - 1) * _target_chunk_size + _chunks.back()->size();
+  // Chunks are not always full.
+  auto row_count = uint64_t{0}; 
+  for(auto chunk : _chunks){
+    row_count += chunk->size(); 
+  }  
+  return row_count; 
 }
 
 ChunkID Table::chunk_count() const {

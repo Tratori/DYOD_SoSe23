@@ -89,7 +89,6 @@ TEST_F(StorageTableTest, CreateNewChunk) {
   table.append({6, "world"});
   table.append({3, "!"});
   EXPECT_EQ(table.chunk_count(), 2);
-  EXPECT_THROW(table.create_new_chunk(), std::logic_error);
   table.append({4, "New Chunk is now allowed"});
   table.create_new_chunk();
   EXPECT_EQ(table.chunk_count(), 3);
