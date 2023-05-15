@@ -119,7 +119,7 @@ TEST_F(StorageTableTest, CompressChunkMultithreading) {
     std::vector<AllTypeVariant> row;
     row.reserve(number_columns);
     for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
-      auto val = rand() % 100;
+      auto val = rand() % 100;  // NOLINT
       row.push_back(val);
     }
     large_table.append(row);
