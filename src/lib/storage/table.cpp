@@ -1,8 +1,9 @@
-#include "table.hpp"
+#include <thread>
+
 #include "dictionary_segment.hpp"
 #include "resolve_type.hpp"
+#include "table.hpp"
 #include "utils/assert.hpp"
-
 namespace opossum {
 
 Table::Table(const ChunkOffset target_chunk_size) {
@@ -130,18 +131,29 @@ std::shared_ptr<const Chunk> Table::get_chunk(ChunkID chunk_id) const {
 }
 
 void Table::compress_chunk(const ChunkID chunk_id) {
-  // TODO(anyone): Make multithreaded
   auto compressed_chunk = std::make_shared<Chunk>();
+  auto threads = std::vector<std::thread>(column_count());
 
-  for (auto col_id = ColumnID{0}; col_id < column_count(); col_id++) {
-    resolve_data_type(_column_types[col_id], [&](const auto data_type_t) {
+  const auto compression_functor = [&](ColumnID column_id) {
+    static std::mutex mutex;
+    resolve_data_type(_column_types[column_id], [&](const auto data_type_t) {
       using ColumnDataType = typename decltype(data_type_t)::type;
-      auto value_segment = get_chunk(chunk_id)->get_segment(col_id);
+
+      auto value_segment = get_chunk(chunk_id)->get_segment(column_id);
       auto dictionary_segment = std::make_shared<DictionarySegment<ColumnDataType>>(value_segment);
+
+      std::lock_guard<std::mutex> lock(mutex);
       compressed_chunk->add_segment(dictionary_segment);
     });
+  };
+
+  for (auto col_id = ColumnID{0}; col_id < column_count(); col_id++) {
+    threads[col_id] = std::thread(compression_functor, col_id);
   }
 
+  for (auto thread_index = uint32_t{0}; thread_index < threads.size(); ++thread_index) {
+    threads[thread_index].join();
+  }
   _chunks[chunk_id] = compressed_chunk;
 }
 

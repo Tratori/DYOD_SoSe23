@@ -12,7 +12,9 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
 
   // creating dictionary
   auto value_segment = std::dynamic_pointer_cast<ValueSegment<T>>(abstract_segment);
-  std::vector<T> values = value_segment->values();
+
+  DebugAssert(value_segment, "Given segment is not a value segment.");
+  auto values = value_segment->values();
   std::sort(values.begin(), values.end());
   auto last_distinct = std::unique(values.begin(), values.end());
   values.erase(last_distinct, values.end());
@@ -46,7 +48,6 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
   } else if (dict_size - 1 <= std::numeric_limits<u_int32_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(vector_size);
   }
-
 
   // filling attribute vector with index of values
   for (auto val_index = ChunkOffset{0}; val_index < vector_size; val_index++) {

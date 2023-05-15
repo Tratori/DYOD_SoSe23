@@ -139,6 +139,10 @@ TEST_F(StorageTableTest, CompressChunkMultithreading) {
   }
 }
 
+TEST_F(StorageTableTest, CompressChunk) {
+  table.compress_chunk(ChunkID{0});
+}
+
 TEST_F(StorageTableTest, SegmentsNullable) {
   table.append({1, "foo"});
   ASSERT_EQ(table.chunk_count(), 1);
