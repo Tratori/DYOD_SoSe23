@@ -68,6 +68,9 @@ AllTypeVariant DictionarySegment<T>::operator[](const ChunkOffset chunk_offset) 
 
 template <typename T>
 T DictionarySegment<T>::get(const ChunkOffset chunk_offset) const {
+  if (_attribute_vector->get(chunk_offset) == null_value_id()) {
+    throw std::logic_error("Value at " + std::to_string(chunk_offset) + "is NULL.");
+  }
   return _dictionary[_attribute_vector->get(chunk_offset)];
 }
 
