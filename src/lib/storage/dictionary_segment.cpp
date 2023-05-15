@@ -15,7 +15,7 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
 
   DebugAssert(value_segment, "Given segment is not a value segment.");
   auto values = value_segment->values();
-  auto values_copy = std::vector<T> (values); 
+  auto values_copy = std::vector<T>(values);
 
   std::sort(values.begin(), values.end());
   auto last_distinct = std::unique(values.begin(), values.end());

@@ -59,19 +59,17 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentDuplicateValues) {
   // Test dictionary size (uniqueness).
   EXPECT_EQ(dict_segment->unique_values_count(), 2);
 
-  for(auto x : dict_segment->dictionary()){
-    std::cout << x << std::endl; 
+  for (auto x : dict_segment->dictionary()) {
+    std::cout << x << std::endl;
   }
 
   // Test sorting.
-  EXPECT_EQ(dict_segment->get(0), int32_t {1});
+  EXPECT_EQ(dict_segment->get(0), int32_t{1});
   EXPECT_EQ(dict_segment->get(1), 1);
   EXPECT_EQ(dict_segment->get(2), 2);
   EXPECT_EQ(dict_segment->get(3), 2);
   EXPECT_EQ(dict_segment->get(4), 1);
 }
-
-
 
 TEST_F(StorageDictionarySegmentTest, LowerUpperBound) {
   for (auto value = int16_t{0}; value <= 10; value += 2) {
