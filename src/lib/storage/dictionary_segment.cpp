@@ -15,6 +15,8 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
 
   DebugAssert(value_segment, "Given segment is not a value segment.");
   auto values = value_segment->values();
+  auto values_copy = std::vector<T> (values); 
+
   std::sort(values.begin(), values.end());
   auto last_distinct = std::unique(values.begin(), values.end());
   values.erase(last_distinct, values.end());
@@ -54,7 +56,7 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
     if (value_segment->is_nullable() && value_segment->null_values()[val_index]) {
       _attribute_vector->set(val_index, null_value_id());
     } else {
-      _attribute_vector->set(val_index, inverted_dictionary[values[val_index]]);
+      _attribute_vector->set(val_index, inverted_dictionary[values_copy[val_index]]);
     }
   }
 }

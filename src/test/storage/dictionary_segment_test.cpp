@@ -43,6 +43,36 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentString) {
   EXPECT_THROW(dict_segment->get(6), std::logic_error);
 }
 
+TEST_F(StorageDictionarySegmentTest, CompressSegmentDuplicateValues) {
+  value_segment_int->append(1);
+  value_segment_int->append(1);
+  value_segment_int->append(2);
+  value_segment_int->append(2);
+  value_segment_int->append(1);
+  value_segment_int->append(2);
+
+  const auto dict_segment = std::make_shared<DictionarySegment<int32_t>>(value_segment_int);
+
+  // Test attribute_vector size.
+  EXPECT_EQ(dict_segment->size(), 6);
+
+  // Test dictionary size (uniqueness).
+  EXPECT_EQ(dict_segment->unique_values_count(), 2);
+
+  for(auto x : dict_segment->dictionary()){
+    std::cout << x << std::endl; 
+  }
+
+  // Test sorting.
+  EXPECT_EQ(dict_segment->get(0), int32_t {1});
+  EXPECT_EQ(dict_segment->get(1), 1);
+  EXPECT_EQ(dict_segment->get(2), 2);
+  EXPECT_EQ(dict_segment->get(3), 2);
+  EXPECT_EQ(dict_segment->get(4), 1);
+}
+
+
+
 TEST_F(StorageDictionarySegmentTest, LowerUpperBound) {
   for (auto value = int16_t{0}; value <= 10; value += 2) {
     value_segment_int->append(value);
