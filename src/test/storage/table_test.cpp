@@ -101,9 +101,42 @@ TEST_F(StorageTableTest, AppendNullValues) {
   EXPECT_THROW(table.append({NULL_VALUE, "foo"}), std::logic_error);
 }
 
-TEST_F(StorageTableTest, CompressChunk) {
-  // Not implemented yet
-  table.compress_chunk(ChunkID{0});
+TEST_F(StorageTableTest, CompressChunkMultithreading) {
+  auto number_columns = ColumnID{10};
+  auto chunk_size = ChunkOffset{10};
+
+  auto col_id_to_name = [](ColumnID col_id) { return "col_" + std::to_string(col_id); };
+
+  Table large_table{chunk_size};
+  auto data_copy = std::vector<std::vector<AllTypeVariant>>();
+  // Add columns
+  for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
+    large_table.add_column(col_id_to_name(col_id), "int", false);
+  }
+
+  // Add rows
+  for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
+    std::vector<AllTypeVariant> row;
+    row.reserve(number_columns);
+    for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
+      auto val = rand() % 100;
+      row.push_back(val);
+    }
+    large_table.append(row);
+    data_copy.push_back(row);
+  }
+
+  large_table.compress_chunk(ChunkID{0});
+
+  auto column_names = large_table.column_names();
+  auto chunk = large_table.get_chunk(ChunkID{0});
+
+  for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
+    auto new_column = chunk->get_segment(col_id);
+    for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
+      EXPECT_EQ(data_copy[row_id][col_id], (*new_column)[row_id]);
+    }
+  }
 }
 
 TEST_F(StorageTableTest, SegmentsNullable) {
