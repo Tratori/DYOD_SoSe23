@@ -133,9 +133,9 @@ TEST_F(StorageTableTest, CompressChunkMultithreading) {
 
   // Checking if compressed chunk and data copy are still equal.
   for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
-    auto new_column = chunk->get_segment(col_id);
+    auto compressed_column = chunk->get_segment(col_id);
     for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
-      EXPECT_EQ(data_copy[row_id][col_id], (*new_column)[row_id]);
+      EXPECT_EQ(data_copy[row_id][col_id], (*compressed_column)[row_id]);
     }
   }
 }

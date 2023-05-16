@@ -146,7 +146,7 @@ void Table::compress_chunk(const ChunkID chunk_id) {
     });
   };
 
-  for (auto col_id = ColumnID{0}; col_id < column_count(); col_id++) {
+  for (auto col_id = ColumnID{0}; col_id < column_count(); ++col_id) {
     threads[col_id] = std::thread(compression_functor, col_id);
   }
 
