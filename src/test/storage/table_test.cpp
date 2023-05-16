@@ -102,21 +102,21 @@ TEST_F(StorageTableTest, AppendNullValues) {
 }
 
 TEST_F(StorageTableTest, CompressChunkMultithreading) {
-  auto number_columns = ColumnID{10};
-  auto chunk_size = ChunkOffset{10};
+  const auto number_columns = ColumnID{100};
+  const auto chunk_size = ChunkOffset{1000};
 
-  auto col_id_to_name = [](ColumnID col_id) { return "col_" + std::to_string(col_id); };
+  const auto col_id_to_name = [](ColumnID col_id) { return "col_" + std::to_string(col_id); };
 
-  Table large_table{chunk_size};
+  auto large_table = Table{chunk_size};
   auto data_copy = std::vector<std::vector<AllTypeVariant>>();
-  // Add columns
+  // Add columns.
   for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
     large_table.add_column(col_id_to_name(col_id), "int", false);
   }
 
-  // Add rows
+  // Add rows.
   for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
-    std::vector<AllTypeVariant> row;
+    auto row = std::vector<AllTypeVariant>();
     row.reserve(number_columns);
     for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
       auto val = rand() % 100;  // NOLINT
@@ -128,9 +128,10 @@ TEST_F(StorageTableTest, CompressChunkMultithreading) {
 
   large_table.compress_chunk(ChunkID{0});
 
-  auto column_names = large_table.column_names();
-  auto chunk = large_table.get_chunk(ChunkID{0});
+  const auto column_names = large_table.column_names();
+  const auto chunk = large_table.get_chunk(ChunkID{0});
 
+  // Checking if compressed chunk and data copy are still equal.
   for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
     auto new_column = chunk->get_segment(col_id);
     for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
