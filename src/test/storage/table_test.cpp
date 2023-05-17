@@ -46,6 +46,14 @@ TEST_F(StorageTableTest, RowCount) {
   EXPECT_EQ(table.row_count(), 4);
 }
 
+TEST_F(StorageTableTest, AddColumn) {
+  EXPECT_EQ(table.column_count(), 2);
+  table.add_column("col_3", "int", true);
+  EXPECT_EQ(table.column_count(), 3);
+  EXPECT_THROW(table.add_column("col_3", "int", false), std::logic_error);
+  EXPECT_EQ(table.column_count(), 3);
+}
+
 TEST_F(StorageTableTest, GetColumnName) {
   EXPECT_EQ(table.column_name(ColumnID{0}), "col_1");
   EXPECT_EQ(table.column_name(ColumnID{1}), "col_2");
@@ -74,11 +82,29 @@ TEST_F(StorageTableTest, GetChunkSize) {
   EXPECT_EQ(table.target_chunk_size(), 2);
 }
 
+TEST_F(StorageTableTest, CreateNewChunk) {
+  EXPECT_EQ(table.chunk_count(), 1);
+  EXPECT_EQ(table.target_chunk_size(), 2);
+  table.append({4, "Hello,"});
+  table.append({6, "world"});
+  table.append({3, "!"});
+  EXPECT_EQ(table.chunk_count(), 2);
+  EXPECT_THROW(table.create_new_chunk(), std::logic_error);
+  table.append({4, "New Chunk is now allowed"});
+  table.create_new_chunk();
+  EXPECT_EQ(table.chunk_count(), 3);
+}
+
 TEST_F(StorageTableTest, AppendNullValues) {
   EXPECT_EQ(table.row_count(), 0);
   table.append({1, NULL_VALUE});
   EXPECT_EQ(table.row_count(), 1);
   EXPECT_THROW(table.append({NULL_VALUE, "foo"}), std::logic_error);
+}
+
+TEST_F(StorageTableTest, CompressChunk) {
+  // Not implemented yet
+  EXPECT_ANY_THROW(table.compress_chunk(ChunkID{0}));
 }
 
 TEST_F(StorageTableTest, SegmentsNullable) {

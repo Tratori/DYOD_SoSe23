@@ -5,42 +5,55 @@
 namespace opossum {
 
 StorageManager& StorageManager::get() {
-  return *(new StorageManager());
-  // A really hacky fix to get the tests to run - replace this with your implementation
+  static StorageManager instance;
+  return instance;
 }
 
 void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> table) {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  if (has_table(name)) {
+    throw std::logic_error("Table already exists.");
+  } else {
+    _tables[name] = table;
+  }
 }
 
 void StorageManager::drop_table(const std::string& name) {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  if (has_table(name)) {
+    _tables.erase(_tables.find(name));
+  } else {
+    throw std::logic_error("Table does not exist.");
+  }
 }
 
 std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  if (has_table(name)) {
+    return _tables.at(name);
+  } else {
+    throw std::logic_error("Table does not exist");
+  }
 }
 
 bool StorageManager::has_table(const std::string& name) const {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  return _tables.find(name) != _tables.end();
 }
 
 std::vector<std::string> StorageManager::table_names() const {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  std::vector<std::string> table_names;
+  for (auto [key, value] : _tables) {
+    table_names.push_back(key);
+  }
+  return table_names;
 }
 
 void StorageManager::print(std::ostream& out) const {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  for (auto [key, value] : _tables) {
+    out << key << " #columns: " << value->column_count() << " #rows: " << value->row_count() << " #chunks "
+        << value->chunk_count() << std::endl;
+  }
 }
 
 void StorageManager::reset() {
-  // Implementation goes here
+  _tables.clear();
 }
 
 }  // namespace opossum
