@@ -129,7 +129,6 @@ ValueID DictionarySegment<T>::lower_bound(const T value) const {
 
 template <typename T>
 ValueID DictionarySegment<T>::lower_bound(const AllTypeVariant& value) const {
-  // TODO(anyone): Actually i dont know if this is the desired behaviour...
   if (variant_is_null(value)) {
     return INVALID_VALUE_ID;
   }
@@ -147,7 +146,6 @@ ValueID DictionarySegment<T>::upper_bound(const T value) const {
 
 template <typename T>
 ValueID DictionarySegment<T>::upper_bound(const AllTypeVariant& value) const {
-  // TODO(anyone): Actually i dont know if this is the desired behaviour...
   if (variant_is_null(value)) {
     return INVALID_VALUE_ID;
   }
