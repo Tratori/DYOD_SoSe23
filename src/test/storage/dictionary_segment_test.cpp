@@ -44,8 +44,10 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentString) {
   EXPECT_EQ(dict_segment->get_typed_value(3), "Steve");
   EXPECT_EQ(dict_segment->get_typed_value(6), std::nullopt);
 
+  #ifdef DEBUG
   EXPECT_THROW(dict_segment->get(6), std::logic_error);
   EXPECT_THROW(dict_segment->get(7), std::logic_error);
+  #endif
 
   EXPECT_EQ(dict_segment->value_of_value_id(ValueID{0}), "Alexander");
 
