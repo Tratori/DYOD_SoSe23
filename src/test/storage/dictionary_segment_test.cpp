@@ -39,9 +39,18 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentString) {
 
   // Test NULL value handling.
   EXPECT_EQ(dict_segment->attribute_vector()->get(6), dict_segment->null_value_id());
+  EXPECT_EQ(dict_segment->get_typed_value(1), "Steve");
+  EXPECT_EQ(dict_segment->get_typed_value(2), "Alexander");
+  EXPECT_EQ(dict_segment->get_typed_value(3), "Steve");
   EXPECT_EQ(dict_segment->get_typed_value(6), std::nullopt);
+
   EXPECT_THROW(dict_segment->get(6), std::logic_error);
   EXPECT_THROW(dict_segment->get(7), std::logic_error);
+
+  EXPECT_EQ(dict_segment->value_of_value_id(ValueID{0}), "Alexander");
+
+  EXPECT_EQ(dict_segment->upper_bound(NULL_VALUE), INVALID_VALUE_ID);
+  EXPECT_EQ(dict_segment->lower_bound(NULL_VALUE), INVALID_VALUE_ID);
 }
 
 TEST_F(StorageDictionarySegmentTest, CompressSegmentDuplicateValues) {
