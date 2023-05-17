@@ -44,15 +44,40 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentString) {
   EXPECT_EQ(dict_segment->get_typed_value(3), "Steve");
   EXPECT_EQ(dict_segment->get_typed_value(6), std::nullopt);
 
-  #ifdef DEBUG
+#ifdef DEBUG
   EXPECT_THROW(dict_segment->get(6), std::logic_error);
   EXPECT_THROW(dict_segment->get(7), std::logic_error);
-  #endif
+#endif
 
   EXPECT_EQ(dict_segment->value_of_value_id(ValueID{0}), "Alexander");
 
   EXPECT_EQ(dict_segment->upper_bound(NULL_VALUE), INVALID_VALUE_ID);
   EXPECT_EQ(dict_segment->lower_bound(NULL_VALUE), INVALID_VALUE_ID);
+}
+
+TEST_F(StorageDictionarySegmentTest, NullValues) {
+  auto null_values_count = u_int8_t{4};
+
+  for (auto counter = u_int8_t{0}; counter < null_values_count; ++counter) {
+    value_segment_str->append(NULL_VALUE);
+  }
+
+  const auto dict_segment = std::make_shared<DictionarySegment<std::string>>(value_segment_str);
+
+  EXPECT_EQ(dict_segment->size(), 4);
+
+  EXPECT_EQ(dict_segment->unique_values_count(), 0);
+
+  for (auto index = ChunkOffset{0}; index < null_values_count; ++index) {
+    EXPECT_EQ(dict_segment->attribute_vector()->get(index), dict_segment->null_value_id());
+    EXPECT_EQ(dict_segment->get_typed_value(index), std::nullopt);
+  }
+
+  EXPECT_EQ(dict_segment->upper_bound(NULL_VALUE), INVALID_VALUE_ID);
+  EXPECT_EQ(dict_segment->lower_bound(NULL_VALUE), INVALID_VALUE_ID);
+
+  EXPECT_EQ(dict_segment->lower_bound(AllTypeVariant{"Alexander"}), INVALID_VALUE_ID);
+  EXPECT_EQ(dict_segment->upper_bound(AllTypeVariant{"Alexander"}), INVALID_VALUE_ID);
 }
 
 TEST_F(StorageDictionarySegmentTest, CompressSegmentDuplicateValues) {
