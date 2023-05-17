@@ -11,12 +11,26 @@ DictionarySegment<T>::DictionarySegment(const std::shared_ptr<AbstractSegment>& 
   auto value_segment = std::dynamic_pointer_cast<ValueSegment<T>>(abstract_segment);
   DebugAssert(value_segment, "Given segment is not a value segment.");
 
-  auto distinct_values_count = initialize_dictionary(value_segment);
-  fill_attributes_vector(distinct_values_count, value_segment);
+  auto distinct_values_count = fill_dictionary(value_segment);
+  initialize_attributes_vector(distinct_values_count, abstract_segment->size());
+  fill_attributes_vector(value_segment);
 }
 
 template <typename T>
-size_t DictionarySegment<T>::initialize_dictionary(std::shared_ptr<ValueSegment<T>> value_segment) {
+void DictionarySegment<T>::initialize_attributes_vector(const size_t distinct_values_count, const size_t values_count) {
+  DebugAssert(values_count >= distinct_values_count, "Distinct count may not be greater than values count.");
+
+  if (distinct_values_count - 1 <= std::numeric_limits<u_int8_t>::max()) {
+    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int8_t>>(values_count);
+  } else if (distinct_values_count - 1 <= std::numeric_limits<u_int16_t>::max()) {
+    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int16_t>>(values_count);
+  } else if (distinct_values_count - 1 <= std::numeric_limits<u_int32_t>::max()) {
+    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(values_count);
+  }
+}
+
+template <typename T>
+size_t DictionarySegment<T>::fill_dictionary(std::shared_ptr<ValueSegment<T>> value_segment) {
   auto values = std::vector<T>(value_segment->values());
 
   std::sort(values.begin(), values.end());
@@ -38,33 +52,26 @@ size_t DictionarySegment<T>::initialize_dictionary(std::shared_ptr<ValueSegment<
 }
 
 template <typename T>
-void DictionarySegment<T>::fill_attributes_vector(const size_t distinct_values_count,
-                                                  std::shared_ptr<ValueSegment<T>> value_segment) {
+void DictionarySegment<T>::fill_attributes_vector(std::shared_ptr<ValueSegment<T>> value_segment) {
   auto values = value_segment->values();
-  const auto values_count = values.size();
-
-  DebugAssert(values_count >= distinct_values_count, "Distinct count may not be greater than values count.");
-
-  if (distinct_values_count - 1 <= std::numeric_limits<u_int8_t>::max()) {
-    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int8_t>>(values_count);
-  } else if (distinct_values_count - 1 <= std::numeric_limits<u_int16_t>::max()) {
-    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int16_t>>(values_count);
-  } else if (distinct_values_count - 1 <= std::numeric_limits<u_int32_t>::max()) {
-    _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(values_count);
-  }
+  auto values_count = values.size();
 
   // Creates lookup.
   std::unordered_map<T, ValueID> inverted_dictionary;
   const auto dict_size = _dictionary.size();
-  for (auto dict_key = uint32_t{0}; dict_key < dict_size; dict_key++) {
+  for (auto dict_key = uint32_t{0}; dict_key < dict_size; ++dict_key) {
     inverted_dictionary.insert({_dictionary[dict_key], ValueID{dict_key}});
   }
 
   DebugAssert(inverted_dictionary.size() == dict_size, "Dictionary contains duplicate elements.");
 
+  auto is_null = [&value_segment](ChunkOffset val_index) {
+    return value_segment->is_nullable() && value_segment->null_values()[val_index];
+  };
+
   // Fills attribute vector with index of values in the dictionary.
-  for (auto val_index = ChunkOffset{0}; val_index < values_count; val_index++) {
-    if (value_segment->is_nullable() && value_segment->null_values()[val_index]) {
+  for (auto val_index = ChunkOffset{0}; val_index < values_count; ++val_index) {
+    if (is_null(val_index)) {
       _attribute_vector->set(val_index, null_value_id());
     } else {
       _attribute_vector->set(val_index, inverted_dictionary[values[val_index]]);

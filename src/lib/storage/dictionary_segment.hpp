@@ -61,8 +61,9 @@ class DictionarySegment : public AbstractSegment {
   size_t estimate_memory_usage() const final;
 
  protected:
-  size_t initialize_dictionary(std::shared_ptr<ValueSegment<T>> value_segment);
-  void fill_attributes_vector(const size_t distinct_values_count, std::shared_ptr<ValueSegment<T>> value_segment);
+  size_t fill_dictionary(std::shared_ptr<ValueSegment<T>> value_segment);
+  void fill_attributes_vector(std::shared_ptr<ValueSegment<T>> value_segment);
+  void initialize_attributes_vector(const size_t distinct_values_count, const size_t values_count);
   T decompress(const ChunkOffset chunk_offset) const;
 
   std::vector<T> _dictionary;
