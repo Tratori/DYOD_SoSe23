@@ -70,7 +70,7 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentDuplicateValues) {
   EXPECT_EQ(dict_segment->unique_values_count(), 2);
 
   // Test sorting.
-  EXPECT_EQ(dict_segment->get(0), int32_t{1});
+  EXPECT_EQ(dict_segment->get(0), 1);
   EXPECT_EQ(dict_segment->get(1), 1);
   EXPECT_EQ(dict_segment->get(2), 2);
   EXPECT_EQ(dict_segment->get(3), 2);
