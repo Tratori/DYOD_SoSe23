@@ -41,6 +41,7 @@ TEST_F(StorageDictionarySegmentTest, CompressSegmentString) {
   EXPECT_EQ(dict_segment->attribute_vector()->get(6), dict_segment->null_value_id());
   EXPECT_EQ(dict_segment->get_typed_value(6), std::nullopt);
   EXPECT_THROW(dict_segment->get(6), std::logic_error);
+  EXPECT_THROW(dict_segment->get(7), std::logic_error);
 }
 
 TEST_F(StorageDictionarySegmentTest, CompressSegmentDuplicateValues) {

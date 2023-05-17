@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abstract_segment.hpp"
+#include "value_segment.hpp"
 
 namespace opossum {
 
@@ -60,6 +61,10 @@ class DictionarySegment : public AbstractSegment {
   size_t estimate_memory_usage() const final;
 
  protected:
+  size_t initialize_dictionary(std::shared_ptr<ValueSegment<T>> value_segment);
+  void fill_attributes_vector(const size_t distinct_values_count, std::shared_ptr<ValueSegment<T>> value_segment);
+  T decompress(const ChunkOffset chunk_offset) const;
+
   std::vector<T> _dictionary;
   std::shared_ptr<AbstractAttributeVector> _attribute_vector;
 };
