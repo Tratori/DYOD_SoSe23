@@ -89,7 +89,6 @@ TEST_F(StorageTableTest, CreateNewChunk) {
   table.append({6, "world"});
   table.append({3, "!"});
   EXPECT_EQ(table.chunk_count(), 2);
-  EXPECT_THROW(table.create_new_chunk(), std::logic_error);
   table.append({4, "New Chunk is now allowed"});
   table.create_new_chunk();
   EXPECT_EQ(table.chunk_count(), 3);
@@ -102,9 +101,47 @@ TEST_F(StorageTableTest, AppendNullValues) {
   EXPECT_THROW(table.append({NULL_VALUE, "foo"}), std::logic_error);
 }
 
+TEST_F(StorageTableTest, CompressChunkMultithreading) {
+  const auto number_columns = ColumnID{100};
+  const auto chunk_size = ChunkOffset{1000};
+
+  const auto col_id_to_name = [](ColumnID col_id) { return "col_" + std::to_string(col_id); };
+
+  auto large_table = Table{chunk_size};
+  auto data_copy = std::vector<std::vector<AllTypeVariant>>();
+  // Add columns.
+  for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
+    large_table.add_column(col_id_to_name(col_id), "int", false);
+  }
+
+  // Add rows.
+  for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
+    auto row = std::vector<AllTypeVariant>();
+    row.reserve(number_columns);
+    for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
+      auto val = rand() % 100;  // NOLINT
+      row.push_back(val);
+    }
+    large_table.append(row);
+    data_copy.push_back(row);
+  }
+
+  large_table.compress_chunk(ChunkID{0});
+
+  const auto column_names = large_table.column_names();
+  const auto chunk = large_table.get_chunk(ChunkID{0});
+
+  // Checking if compressed chunk and data copy are still equal.
+  for (auto col_id = ColumnID{0}; col_id < number_columns; ++col_id) {
+    auto compressed_column = chunk->get_segment(col_id);
+    for (auto row_id = ChunkOffset{0}; row_id < chunk_size; ++row_id) {
+      EXPECT_EQ(data_copy[row_id][col_id], (*compressed_column)[row_id]);
+    }
+  }
+}
+
 TEST_F(StorageTableTest, CompressChunk) {
-  // Not implemented yet
-  EXPECT_ANY_THROW(table.compress_chunk(ChunkID{0}));
+  table.compress_chunk(ChunkID{0});
 }
 
 TEST_F(StorageTableTest, SegmentsNullable) {
@@ -120,6 +157,17 @@ TEST_F(StorageTableTest, SegmentsNullable) {
   const auto& value_segment_2 = std::dynamic_pointer_cast<ValueSegment<std::string>>(chunk->get_segment(ColumnID{1}));
   ASSERT_TRUE(value_segment_2);
   EXPECT_TRUE(value_segment_2->is_nullable());
+}
+
+TEST_F(StorageTableTest, AppendWithEncodedSegments) {
+  table.append({1, "foo"});
+  EXPECT_EQ(table.row_count(), 1);
+
+  table.compress_chunk(ChunkID{0});
+  table.append({2, "bar"});
+
+  EXPECT_EQ(table.row_count(), 2);
+  EXPECT_EQ(table.chunk_count(), 2);
 }
 
 }  // namespace opossum

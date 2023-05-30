@@ -1,5 +1,8 @@
-#include "table.hpp"
+#include <thread>
+
+#include "dictionary_segment.hpp"
 #include "resolve_type.hpp"
+#include "table.hpp"
 #include "utils/assert.hpp"
 
 namespace opossum {
@@ -32,10 +35,6 @@ void Table::add_column(const std::string& name, const std::string& type, const b
 }
 
 void Table::create_new_chunk() {
-  if (_chunks.back()->size() < _target_chunk_size) {
-    throw std::logic_error("It is not allowed to add a new chunk if the last chunk is not full yet.");
-  }
-
   _chunks.emplace_back(std::make_shared<Chunk>());
 
   size_t num_columns = _column_types.size();
@@ -49,7 +48,14 @@ void Table::create_new_chunk() {
 }
 
 void Table::append(const std::vector<AllTypeVariant>& values) {
-  if (_chunks.back()->size() == _target_chunk_size) {
+  auto is_dictionary_encoded = false;
+  resolve_data_type(_column_types[0], [this, &is_dictionary_encoded](const auto data_type_t) {
+    using ColumnDataType = typename decltype(data_type_t)::type;
+    auto segment = _chunks.back()->get_segment(ColumnID{0});
+    is_dictionary_encoded = static_cast<bool>(std::dynamic_pointer_cast<DictionarySegment<ColumnDataType>>(segment));
+  });
+
+  if (_chunks.back()->size() == _target_chunk_size || is_dictionary_encoded) {
     create_new_chunk();
   }
   _chunks.back()->append(values);
@@ -60,8 +66,12 @@ ColumnCount Table::column_count() const {
 }
 
 uint64_t Table::row_count() const {
-  // This is based on the assumption that all but the last chunk contain exactly _target_chunk_size values.
-  return (chunk_count() - 1) * _target_chunk_size + _chunks.back()->size();
+  // Chunks are not always full.
+  auto row_count = uint64_t{0};
+  for (auto chunk : _chunks) {
+    row_count += chunk->size();
+  }
+  return row_count;
 }
 
 ChunkID Table::chunk_count() const {
@@ -122,8 +132,29 @@ std::shared_ptr<const Chunk> Table::get_chunk(ChunkID chunk_id) const {
 }
 
 void Table::compress_chunk(const ChunkID chunk_id) {
-  // Implementation goes here
-  Fail("Implementation is missing.");
+  auto compressed_chunk = std::make_shared<Chunk>();
+  auto compressed_segments = std::vector<std::shared_ptr<AbstractSegment>>(column_count());
+  auto threads = std::vector<std::thread>(column_count());
+
+  const auto compression_functor = [&](ColumnID column_id) {
+    resolve_data_type(_column_types[column_id], [&](const auto data_type_t) {
+      using ColumnDataType = typename decltype(data_type_t)::type;
+
+      auto value_segment = get_chunk(chunk_id)->get_segment(column_id);
+      auto compressed_segment = std::make_shared<DictionarySegment<ColumnDataType>>(value_segment);
+      compressed_segments[column_id] = compressed_segment;
+    });
+  };
+
+  for (auto col_id = ColumnID{0}; col_id < column_count(); ++col_id) {
+    threads[col_id] = std::thread(compression_functor, col_id);
+  }
+
+  for (auto thread_index = uint32_t{0}; thread_index < threads.size(); ++thread_index) {
+    threads[thread_index].join();
+    compressed_chunk->add_segment(compressed_segments[thread_index]);
+  }
+  _chunks[chunk_id] = compressed_chunk;
 }
 
 }  // namespace opossum
