@@ -57,7 +57,7 @@ void DictionarySegment<T>::fill_attributes_vector(std::shared_ptr<ValueSegment<T
   auto values_count = values.size();
 
   // Creates lookup.
-  std::unordered_map<T, ValueID> inverted_dictionary;
+  auto inverted_dictionary = std::unordered_map<T, ValueID>();
   const auto dict_size = _dictionary.size();
   for (auto dict_key = uint32_t{0}; dict_key < dict_size; ++dict_key) {
     inverted_dictionary.insert({_dictionary[dict_key], ValueID{dict_key}});
