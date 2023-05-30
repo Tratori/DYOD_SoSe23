@@ -24,6 +24,11 @@ class ReferenceSegment : public AbstractSegment {
   ColumnID referenced_column_id() const;
 
   size_t estimate_memory_usage() const final;
+
+ private:
+  std::shared_ptr<const Table> _referenced_table;
+  const ColumnID _referenced_column_id;
+  std::shared_ptr<const PosList> _pos_list;
 };
 
 }  // namespace opossum
