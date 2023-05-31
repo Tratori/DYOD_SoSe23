@@ -3,6 +3,8 @@
 #include "resolve_type.hpp"
 #include "storage/table.hpp"
 #include "storage/value_segment.hpp"
+#include "storage/reference_segment.hpp"
+#include "storage/dictionary_segment.hpp"
 
 namespace opossum {
 
@@ -38,23 +40,45 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       auto const segment = chunk->get_segment(_column_id);
 
       auto const value_segment = std::dynamic_pointer_cast<ValueSegment<Type>>(segment);
+      auto const dictionary_segment = std::dynamic_pointer_cast<DictionarySegment<Type>>(segment);
+      auto const reference_segment = std::dynamic_pointer_cast<ReferenceSegment>(segment);
+
+      std::function<bool(Type& a, Type& b)> op = [](Type& a, Type& b) { return true; };
+
+      switch (_scan_type) {
+        case ScanType::OpEquals:
+          op = [](Type& a, Type& b) { return a == b; };
+        case ScanType::OpNotEquals:
+          op = [](Type& a, Type& b) { return a != b; };
+        case ScanType::OpLessThan:
+          op = [](Type& a, Type& b) { return a < b; };
+        case ScanType::OpLessThanEquals:
+          op = [](Type& a, Type& b) { return a <= b; };
+        case ScanType::OpGreaterThan:
+          op = [](Type& a, Type& b) { return a > b; };
+        case ScanType::OpGreaterThanEquals:
+          op = [](Type& a, Type& b) { return a >= b; };
+      
+        default:
+          Fail("Scan type not defined.");
+      }
     }
   });
 
   //auto scan_type_function(ScanType scan_type) {
   //  switch (scan_type) {
   //    case ScanType::OpEquals:
-  //      return [](auto& a, auto& b) -> std::function<bool()> { return a == b; };
+  //      return [](auto& a, auto& b) { return a == b; };
   //    case ScanType::OpNotEquals:
-  //      return [](auto& a, auto& b) -> std::function<bool()> { return a != b; };
+  //      return [](auto& a, auto& b) { return a != b; };
   //    case ScanType::OpLessThan:
-  //      return [](auto& a, auto& b) -> std::function<bool()> { return a < b; };
+  //      return [](auto& a, auto& b) { return a < b; };
   //    case ScanType::OpLessThanEquals:
-  //      return [](auto& a, auto& b) -> std::function<bool()> { return a <= b; };
+  //      return [](auto& a, auto& b) { return a <= b; };
   //    case ScanType::OpGreaterThan:
-  //      return [](auto& a, auto& b) -> std::function<bool()> { return a > b; };
+  //      return [](auto& a, auto& b) { return a > b; };
   //    case ScanType::OpGreaterThanEquals:
-  //      return [](auto& a, auto& b) -> std::function<bool()> { return a >= b; };
+  //      return [](auto& a, auto& b) { return a >= b; };
   //
   //    default:
   //      Fail("Scan type not defined.");
