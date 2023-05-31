@@ -45,34 +45,16 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       const auto dictionary_segment = std::dynamic_pointer_cast<DictionarySegment<Type>>(segment);
       const auto reference_segment = std::dynamic_pointer_cast<ReferenceSegment>(segment);
 
-      std::function<bool(Type & a, Type & b)> op = [](Type& a, Type& b) { return true; };
-
-      switch (_scan_type) {
-        case ScanType::OpEquals:
-          op = [](Type& a, Type& b) { return a == b; };
-        case ScanType::OpNotEquals:
-          op = [](Type& a, Type& b) { return a != b; };
-        case ScanType::OpLessThan:
-          op = [](Type& a, Type& b) { return a < b; };
-        case ScanType::OpLessThanEquals:
-          op = [](Type& a, Type& b) { return a <= b; };
-        case ScanType::OpGreaterThan:
-          op = [](Type& a, Type& b) { return a > b; };
-        case ScanType::OpGreaterThanEquals:
-          op = [](Type& a, Type& b) { return a >= b; };
-
-        default:
-          Fail("Scan type not defined.");
-      }
-
       if (value_segment) {
         const auto values = value_segment->values();
-        auto row_id = ChunkOffset{0};
+        //auto row_id = ChunkOffset{0};
         for (const auto& value : values) {
-          if (op(value, _search_value)) {
-            position_list.push_back(RowID{chunk_id, row_id});
+          const auto scan_op = _create_scan_operation<Type>();
+          const auto search_val = type_cast<Type>(_search_value);
+
+          if (scan_op(value, search_val)) {
+            position_list.push_back(RowID{chunk_id, _column_id});
           }
-          row_id++;
         }
       } else if (dictionary_segment) {
       }
@@ -80,25 +62,34 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
     }
   });
 
-  //auto scan_type_function(ScanType scan_type) {
-  //  switch (scan_type) {
-  //    case ScanType::OpEquals:
-  //      return [](auto& a, auto& b) { return a == b; };
-  //    case ScanType::OpNotEquals:
-  //      return [](auto& a, auto& b) { return a != b; };
-  //    case ScanType::OpLessThan:
-  //      return [](auto& a, auto& b) { return a < b; };
-  //    case ScanType::OpLessThanEquals:
-  //      return [](auto& a, auto& b) { return a <= b; };
-  //    case ScanType::OpGreaterThan:
-  //      return [](auto& a, auto& b) { return a > b; };
-  //    case ScanType::OpGreaterThanEquals:
-  //      return [](auto& a, auto& b) { return a >= b; };
-  //
-  //    default:
-  //      Fail("Scan type not defined.");
-  //  }}
-
   return nullptr;
 }
+
+template <typename T>
+std::function<bool(T, T)> TableScan::_create_scan_operation() const {
+  switch (scan_type()) {
+    case ScanType::OpEquals:
+      return [](auto left_operand, auto right_operand) { return left_operand == right_operand; };
+
+    case ScanType::OpNotEquals:
+      return [](auto left_operand, auto right_operand) { return left_operand != right_operand; };
+
+    case ScanType::OpLessThan:
+      return [](auto left_operand, auto right_operand) { return left_operand < right_operand; };
+
+    case ScanType::OpLessThanEquals:
+      return [](auto left_operand, auto right_operand) { return left_operand <= right_operand; };
+
+    case ScanType::OpGreaterThan:
+      return [](auto left_operand, auto right_operand) { return left_operand > right_operand; };
+
+    case ScanType::OpGreaterThanEquals:
+      return [](auto left_operand, auto right_operand) { return left_operand >= right_operand; };
+
+    default:
+      Fail("Invalid Scan Operation.");
+      break;
+  }
+}
+
 };  // namespace opossum

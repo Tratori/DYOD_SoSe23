@@ -18,6 +18,9 @@ class TableScan : public AbstractOperator {
   const AllTypeVariant& search_value() const;
 
  protected:
+  template <typename T>
+  std::function<bool(T, T)> _create_scan_operation() const;
+
   std::shared_ptr<const Table> _on_execute() override;
   ColumnID _column_id;
   ScanType _scan_type;
