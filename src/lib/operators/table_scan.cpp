@@ -169,6 +169,8 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
     const auto dict_segment = std::dynamic_pointer_cast<DictionarySegment<T>>(target_segment);
     const auto val_segment = std::dynamic_pointer_cast<ValueSegment<T>>(target_segment);
 
+    Assert(dict_segment || val_segment, "Segment that ReferenceSegement references is not supported by TableScan.");
+
     if (val_segment) {
       // If value is null, it cannot appear in result set, so just continue.
       if (val_segment->is_null(row.chunk_offset)) {
