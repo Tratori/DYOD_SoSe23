@@ -57,6 +57,12 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       } else if (reference_segment) {
         position_list = _tablescan_reference_segment<Type>(reference_segment, chunk_id);
       }
+
+      if (!position_list->empty()) {
+        output_reference_segments.push_back(
+          std::make_shared<ReferenceSegment>(input_table, _column_id, position_list)
+        );
+      }
     }
   });
 
