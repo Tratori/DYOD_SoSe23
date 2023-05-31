@@ -56,6 +56,9 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       const auto dictionary_segment = std::dynamic_pointer_cast<DictionarySegment<Type>>(segment);
       const auto reference_segment = std::dynamic_pointer_cast<ReferenceSegment>(segment);
 
+      Assert(value_segment || dictionary_segment || reference_segment,
+             "TableScan was called on unsupported segment type");
+
       if (value_segment) {
         position_list = _tablescan_value_segment<Type>(value_segment, chunk_id);
       } else if (dictionary_segment) {
