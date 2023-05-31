@@ -32,13 +32,14 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   Assert(input_table, "Performing a table scan without input does not work.");
   const auto chunk_count = input_table->chunk_count();
   auto const column_type = input_table->column_type(_column_id);
-  auto result_table = Table{input_table->target_chunk_size()};
+  auto output_reference_segments = std::vector<std::shared_ptr<ReferenceSegment>>{};
+  output_reference_segments.reserve(chunk_count);
 
   resolve_data_type(column_type, [&](auto type) {
     using Type = typename decltype(type)::type;
 
-    auto position_list = std::make_shared<PosList>();
     for (auto chunk_id = ChunkID{0}; chunk_id < chunk_count; ++chunk_id) {
+      auto position_list = std::make_shared<PosList>();
       const auto chunk = input_table->get_chunk(chunk_id);
       const auto segment = chunk->get_segment(_column_id);
 
@@ -57,13 +58,19 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
             position_list->push_back(RowID{chunk_id, _column_id});
           }
         }
+
+        if (!position_list->empty()) {
+          output_reference_segments.push_back(
+              std::make_shared<ReferenceSegment>(input_table, _column_id, position_list));
+        }
       } else if (dictionary_segment) {
       }
       //auto result_chunk = ReferenceSegment(input_table, _column_id, );
     }
   });
 
-  return nullptr;
+  //Table test = Table(input_table, output_reference_segments);
+  return std::make_shared<Table>(*input_table, output_reference_segments);
 }
 
 template <typename T>

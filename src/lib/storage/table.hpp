@@ -18,7 +18,7 @@ class Table : private Noncopyable {
 
   // Copies the definition of the other table and resolves reference_segments, so that a new chunk is created for each
   // given reference_segment.
-  Table(const Table& other_table, const std::vector<ReferenceSegment>& reference_segments);
+  Table(const Table& other_table, const std::vector<std::shared_ptr<ReferenceSegment>>& reference_segments);
 
   // Returns the number of columns (cannot exceed ColumnID (uint16_t)).
   ColumnCount column_count() const;

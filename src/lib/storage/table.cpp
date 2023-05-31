@@ -13,7 +13,7 @@ Table::Table(const ChunkOffset target_chunk_size) {
   _chunks = std::vector<std::shared_ptr<Chunk>>{std::make_shared<Chunk>()};
 }
 
-Table::Table(const Table& other_table, const std::vector<ReferenceSegment>& reference_segments)
+Table::Table(const Table& other_table, const std::vector<std::shared_ptr<ReferenceSegment>>& reference_segments)
     : _column_names{other_table._column_names},
       _column_types{other_table._column_types},
       _column_nullable{other_table._column_nullable},
@@ -25,8 +25,8 @@ Table::Table(const Table& other_table, const std::vector<ReferenceSegment>& refe
   for (auto chunk_id = ChunkID{0}; chunk_id < number_chunks; ++chunk_id) {
     auto output_chunk = std::make_shared<Chunk>();
     for (auto column_id = ColumnID{0}; column_id < column_count; ++column_id) {
-      output_chunk->add_segment(std::make_shared<ReferenceSegment>(reference_segments[chunk_id].referenced_table(),
-                                                                   column_id, reference_segments[chunk_id].pos_list()));
+      output_chunk->add_segment(std::make_shared<ReferenceSegment>(
+          reference_segments[chunk_id]->referenced_table(), column_id, reference_segments[chunk_id]->pos_list()));
     }
     _chunks.push_back(output_chunk);
   }
