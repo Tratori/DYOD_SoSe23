@@ -1,5 +1,8 @@
 #include "table_scan.hpp"
 #include "get_table.hpp"
+#include "resolve_type.hpp"
+#include "storage/table.hpp"
+#include "storage/value_segment.hpp"
 
 namespace opossum {
 
@@ -20,12 +23,44 @@ const AllTypeVariant& TableScan::search_value() const {
 }
 
 std::shared_ptr<const Table> TableScan::_on_execute() {
-  const auto input = _left_input->get_output();
+  const auto input_table = _left_input_table();
   const auto comparitor = _search_value;
 
   // TODO(Robert): What if last operator does not return anything?
-  Assert(input, "Performing a table scan without input does not work.");
+  Assert(input_table, "Performing a table scan without input does not work.");
+  const auto chunk_count = input_table->chunk_count();
+  auto const column_type = input_table->column_type(_column_id);
+
+  resolve_data_type(column_type, [&](auto type) {
+    using Type = typename decltype(type)::type;
+    for (auto chunk_id = ChunkID{0}; chunk_id < chunk_count; ++chunk_id) {
+      auto const chunk = input_table->get_chunk(chunk_id);
+      auto const segment = chunk->get_segment(_column_id);
+
+      auto const value_segment = dynamic_cast<ValueSegment<Type>>(segment);
+    }
+  });
+
+  //auto scan_type_function(ScanType scan_type) {
+  //  switch (scan_type) {
+  //    case ScanType::OpEquals:
+  //      return [](auto& a, auto& b) -> std::function<bool()> { return a == b; };
+  //    case ScanType::OpNotEquals:
+  //      return [](auto& a, auto& b) -> std::function<bool()> { return a != b; };
+  //    case ScanType::OpLessThan:
+  //      return [](auto& a, auto& b) -> std::function<bool()> { return a < b; };
+  //    case ScanType::OpLessThanEquals:
+  //      return [](auto& a, auto& b) -> std::function<bool()> { return a <= b; };
+  //    case ScanType::OpGreaterThan:
+  //      return [](auto& a, auto& b) -> std::function<bool()> { return a > b; };
+  //    case ScanType::OpGreaterThanEquals:
+  //      return [](auto& a, auto& b) -> std::function<bool()> { return a >= b; };
+  //
+  //    default:
+  //      Fail("Scan type not defined.");
+  //  }}
 
   auto comp_op = []() {};
+  return nullptr;
 }
 };  // namespace opossum
