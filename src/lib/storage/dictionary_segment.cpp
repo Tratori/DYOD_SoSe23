@@ -169,8 +169,6 @@ ChunkOffset DictionarySegment<T>::unique_values_count() const {
 
 template <typename T>
 ChunkOffset DictionarySegment<T>::size() const {
-  if (!_attribute_vector)
-    return 0;
   return static_cast<ChunkOffset>(_attribute_vector->size());
 }
 
