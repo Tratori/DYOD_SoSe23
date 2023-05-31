@@ -95,6 +95,10 @@ TEST_F(OperatorsTableScanTest, DoubleScan) {
   auto expected_result = load_table("src/test/tables/int_float_filtered.tbl", 2);
 
   auto scan_1 = std::make_shared<TableScan>(_table_wrapper, ColumnID{0}, ScanType::OpGreaterThanEquals, 1234);
+
+  EXPECT_EQ(scan_1->column_id(), ColumnID{0});
+  EXPECT_EQ(scan_1->scan_type(), ScanType::OpGreaterThanEquals);
+
   scan_1->execute();
 
   auto scan_2 = std::make_shared<TableScan>(scan_1, ColumnID{1}, ScanType::OpLessThan, 457.9);
