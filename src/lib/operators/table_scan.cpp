@@ -59,9 +59,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       }
 
       if (!position_list->empty()) {
-        output_reference_segments.push_back(
-          std::make_shared<ReferenceSegment>(input_table, _column_id, position_list)
-        );
+        output_reference_segments.push_back(std::make_shared<ReferenceSegment>(input_table, _column_id, position_list));
       }
     }
   });
@@ -85,7 +83,7 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
     /**
      * Upper Bound is exclusive ==> [minElement, upperBound)
      * Lower Bound is inclusive ==> [lowerBound, maxElement]
-     * 
+     *
      * Therefore, if they match, there is no matching element with the search value.
      */
     case ScanType::OpEquals:
@@ -126,10 +124,12 @@ std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<Val
   auto position_list = std::make_shared<PosList>();
   const auto search_val = type_cast<T>(_search_value);
 
+  auto value_ind = ChunkOffset{0};
   for (const auto& value : values) {
     if (scan_op(value, search_val)) {
-      position_list->push_back(RowID{chunk_id, _column_id});
+      position_list->push_back(RowID{chunk_id, value_ind});
     }
+    ++value_ind;
   }
 
   return position_list;
@@ -146,16 +146,15 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
   const auto scan_op = _create_scan_operation<T>();
 
   for (auto value_index = ChunkOffset{0}; value_index < segment->size(); ++value_index) {
-
     const auto row = (*input_position_list)[value_index];
     const auto chunk = table->get_chunk(row.chunk_id);
     const auto target_segment = chunk->get_segment(_column_id);
 
     std::shared_ptr<PosList> pos_list;
 
-    const auto dict_segment =std::dynamic_pointer_cast<DictionarySegment<T>>(target_segment);
+    const auto dict_segment = std::dynamic_pointer_cast<DictionarySegment<T>>(target_segment);
     const auto val_segment = std::dynamic_pointer_cast<ValueSegment<T>>(target_segment);
-    
+
     if (val_segment) {
       const auto values = val_segment->values();
       const auto casted_value = type_cast<T>(values[row.chunk_offset]);
