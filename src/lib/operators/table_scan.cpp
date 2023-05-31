@@ -1,4 +1,5 @@
 #include "table_scan.hpp"
+#include "get_table.hpp"
 
 namespace opossum {
 
@@ -19,6 +20,12 @@ const AllTypeVariant& TableScan::search_value() const {
 }
 
 std::shared_ptr<const Table> TableScan::_on_execute() {
-  Fail("Implementation missing.");
+  const auto input = _left_input->get_output();
+  const auto comparitor = _search_value;
+
+  // TODO(Robert): What if last operator does not return anything?
+  Assert(input, "Performing a table scan without input does not work.");
+
+  auto comp_op = []() {};
 }
 };  // namespace opossum
