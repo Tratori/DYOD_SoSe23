@@ -37,7 +37,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       auto const chunk = input_table->get_chunk(chunk_id);
       auto const segment = chunk->get_segment(_column_id);
 
-      auto const value_segment = dynamic_cast<ValueSegment<Type>>(segment);
+      auto const value_segment = std::dynamic_pointer_cast<ValueSegment<Type>>(segment);
     }
   });
 
@@ -60,7 +60,6 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   //      Fail("Scan type not defined.");
   //  }}
 
-  auto comp_op = []() {};
   return nullptr;
 }
 };  // namespace opossum
