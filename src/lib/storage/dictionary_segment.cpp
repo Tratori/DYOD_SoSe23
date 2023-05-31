@@ -27,7 +27,8 @@ void DictionarySegment<T>::initialize_attributes_vector(const size_t distinct_va
   } else if (distinct_values_count - 1 <= std::numeric_limits<u_int32_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(values_count);
   } else {
-    throw std::logic_error("Can not create attribute vector that stores " + std::to_string(distinct_values_count) + " different values."); 
+    throw std::logic_error("Can not create attribute vector that stores " + std::to_string(distinct_values_count) +
+                           " different values.");
   }
 }
 
@@ -168,7 +169,7 @@ ChunkOffset DictionarySegment<T>::unique_values_count() const {
 
 template <typename T>
 ChunkOffset DictionarySegment<T>::size() const {
-  if (!_attribute_vector) 
+  if (!_attribute_vector)
     return 0;
   return static_cast<ChunkOffset>(_attribute_vector->size());
 }
