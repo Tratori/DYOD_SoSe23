@@ -94,8 +94,10 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
      * Therefore, if they match, there is no matching element with the search value.
      */
     case ScanType::OpEquals:
-      if (lower_bound == upper_bound)
+      if (lower_bound == upper_bound) {
         return position_list;
+      }
+      break;
     case ScanType::OpNotEquals:
       if (lower_bound == upper_bound)
         scan_op = [](auto l, auto r) { return true; };
