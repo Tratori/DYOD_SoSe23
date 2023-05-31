@@ -2,9 +2,9 @@
 
 #include "abstract_operator.hpp"
 #include "all_type_variant.hpp"
-#include "utils/assert.hpp"
 #include "storage/dictionary_segment.hpp"
 #include "storage/reference_segment.hpp"
+#include "utils/assert.hpp"
 
 namespace opossum {
 

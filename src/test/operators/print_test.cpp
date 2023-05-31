@@ -72,9 +72,9 @@ TEST_F(OperatorsPrintTest, FilledTable) {
   auto output_str = _output.str();
 
   std::ostringstream _output2;
-  auto table2 = print->get_output(); 
-  print->print(table2, _output2); 
-  EXPECT_EQ(_output2.str(),  output_str); 
+  auto table2 = print->get_output();
+  print->print(table2, _output2);
+  EXPECT_EQ(_output2.str(), output_str);
 
   EXPECT_TRUE(output_str.find("Chunk 0") != std::string::npos);
   // There should not be a third chunk (at least that's the current impl).

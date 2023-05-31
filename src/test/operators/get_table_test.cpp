@@ -19,7 +19,6 @@ TEST_F(OperatorsGetTableTest, GetOutput) {
   get_table_oper->execute();
 
   EXPECT_EQ(get_table_oper->get_output(), _test_table);
-  
 }
 
 TEST_F(OperatorsGetTableTest, GetTableName) {

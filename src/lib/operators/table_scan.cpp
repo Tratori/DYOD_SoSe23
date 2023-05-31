@@ -64,7 +64,8 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
 }
 
 template <typename T>
-std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<DictionarySegment<T>> segment, ChunkID chunk_id) {
+std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<DictionarySegment<T>> segment,
+                                                            ChunkID chunk_id) {
   auto position_list = std::make_shared<PosList>();
   const auto search_val = type_cast<T>(_search_value);
 
@@ -80,12 +81,14 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
      * Lower Bound is inclusive ==> [lowerBound, maxElement]
      * 
      * Therefore, if they match, there is no matching element with the search value.
-     */ 
+     */
     case ScanType::OpEquals:
-      if (lower_bound == upper_bound) scan_op = [](auto l, auto r) { return false; };
+      if (lower_bound == upper_bound)
+        scan_op = [](auto l, auto r) { return false; };
       break;
     case ScanType::OpNotEquals:
-      if (lower_bound == upper_bound) scan_op = [](auto l, auto r) { return true; };
+      if (lower_bound == upper_bound)
+        scan_op = [](auto l, auto r) { return true; };
       break;
     // Rest stays as it is.
     case ScanType::OpLessThan:
@@ -109,7 +112,8 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
 }
 
 template <typename T>
-std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<ValueSegment<T>> segment, ChunkID chunk_id) {
+std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<ValueSegment<T>> segment,
+                                                             ChunkID chunk_id) {
   const auto scan_op = _create_scan_operation<T>();
   const auto values = segment->values();
 
@@ -126,12 +130,12 @@ std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<Val
 }
 
 template <typename T>
-std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr<ReferenceSegment> segment, ChunkID chunk_id) {
+std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr<ReferenceSegment> segment,
+                                                                 ChunkID chunk_id) {
   auto position_list = std::make_shared<PosList>();
 
   return nullptr;
 }
-
 
 template <typename T>
 std::function<bool(T, T)> TableScan::_create_scan_operation() const {

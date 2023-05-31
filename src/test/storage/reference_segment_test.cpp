@@ -60,7 +60,7 @@ TEST_F(ReferenceSegmentTest, Getter) {
   EXPECT_EQ(reference_segment.referenced_column_id(), 0);
   EXPECT_EQ(reference_segment.pos_list(), pos_list);
   EXPECT_EQ(reference_segment.size(), pos_list->size());
-  EXPECT_EQ(reference_segment.estimate_memory_usage(), 3 * 8 );
+  EXPECT_EQ(reference_segment.estimate_memory_usage(), 3 * 8);
 }
 
 TEST_F(ReferenceSegmentTest, RetrievesValuesOutOfOrder) {
