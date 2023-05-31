@@ -32,7 +32,14 @@ Table::Table(const Table& other_table, const std::vector<std::shared_ptr<Referen
   }
   // add empty chunk, incase no ReferenceSegments were passed
   if (number_chunks == 0) {
-    _chunks.push_back(std::make_shared<Chunk>());
+    auto output_chunk = std::make_shared<Chunk>();
+    for (auto column_id = ColumnID{0}; column_id < column_count; ++column_id) {
+      resolve_data_type(_column_types[column_id], [&](const auto data_type_t) {
+        using ColumnDataType = typename decltype(data_type_t)::type;
+        output_chunk->add_segment(std::make_shared<ValueSegment<ColumnDataType>>());
+      });
+    }
+    _chunks.push_back(output_chunk);
   }
 }
 
