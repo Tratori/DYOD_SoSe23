@@ -1,10 +1,11 @@
 #include "table_scan.hpp"
 #include "get_table.hpp"
 #include "resolve_type.hpp"
+#include "storage/dictionary_segment.hpp"
+#include "storage/reference_segment.hpp"
 #include "storage/table.hpp"
 #include "storage/value_segment.hpp"
-#include "storage/reference_segment.hpp"
-#include "storage/dictionary_segment.hpp"
+#include "types.hpp"
 
 namespace opossum {
 
@@ -31,18 +32,20 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   Assert(input_table, "Performing a table scan without input does not work.");
   const auto chunk_count = input_table->chunk_count();
   auto const column_type = input_table->column_type(_column_id);
+  auto result_table = Table{input_table->target_chunk_size()};
 
   resolve_data_type(column_type, [&](auto type) {
     using Type = typename decltype(type)::type;
     for (auto chunk_id = ChunkID{0}; chunk_id < chunk_count; ++chunk_id) {
-      auto const chunk = input_table->get_chunk(chunk_id);
-      auto const segment = chunk->get_segment(_column_id);
+      auto position_list = PosList();
+      const auto chunk = input_table->get_chunk(chunk_id);
+      const auto segment = chunk->get_segment(_column_id);
 
-      auto const value_segment = std::dynamic_pointer_cast<ValueSegment<Type>>(segment);
-      auto const dictionary_segment = std::dynamic_pointer_cast<DictionarySegment<Type>>(segment);
-      auto const reference_segment = std::dynamic_pointer_cast<ReferenceSegment>(segment);
+      const auto value_segment = std::dynamic_pointer_cast<ValueSegment<Type>>(segment);
+      const auto dictionary_segment = std::dynamic_pointer_cast<DictionarySegment<Type>>(segment);
+      const auto reference_segment = std::dynamic_pointer_cast<ReferenceSegment>(segment);
 
-      std::function<bool(Type& a, Type& b)> op = [](Type& a, Type& b) { return true; };
+      std::function<bool(Type & a, Type & b)> op = [](Type& a, Type& b) { return true; };
 
       switch (_scan_type) {
         case ScanType::OpEquals:
@@ -57,21 +60,23 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
           op = [](Type& a, Type& b) { return a > b; };
         case ScanType::OpGreaterThanEquals:
           op = [](Type& a, Type& b) { return a >= b; };
-      
+
         default:
           Fail("Scan type not defined.");
       }
 
       if (value_segment) {
         const auto values = value_segment->values();
+        auto row_id = ChunkOffset{0};
         for (const auto& value : values) {
           if (op(value, _search_value)) {
-            // Add to table
+            position_list.push_back(RowID{chunk_id, row_id});
           }
+          row_id++;
         }
       } else if (dictionary_segment) {
-
       }
+      //auto result_chunk = ReferenceSegment(input_table, _column_id, );
     }
   });
 
