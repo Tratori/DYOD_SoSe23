@@ -1,8 +1,7 @@
 #include "table_scan.hpp"
 #include "get_table.hpp"
 #include "resolve_type.hpp"
-#include "storage/dictionary_segment.hpp"
-#include "storage/reference_segment.hpp"
+#include "storage/abstract_attribute_vector.hpp"
 #include "storage/table.hpp"
 #include "storage/value_segment.hpp"
 #include "types.hpp"
@@ -52,22 +51,11 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       const auto reference_segment = std::dynamic_pointer_cast<ReferenceSegment>(segment);
 
       if (value_segment) {
-        const auto values = value_segment->values();
-        //auto row_id = ChunkOffset{0};
-        for (const auto& value : values) {
-          const auto scan_op = _create_scan_operation<Type>();
-          const auto search_val = type_cast<Type>(_search_value);
-
-          if (scan_op(value, search_val)) {
-            position_list->push_back(RowID{chunk_id, _column_id});
-          }
-        }
-
-        if (!position_list->empty()) {
-          output_reference_segments.push_back(
-              std::make_shared<ReferenceSegment>(input_table, _column_id, position_list));
-        }
+        position_list = _tablescan_value_segment<Type>(value_segment, chunk_id);
       } else if (dictionary_segment) {
+        position_list = _tablescan_dict_segment<Type>(dictionary_segment, chunk_id);
+      } else if (reference_segment) {
+        position_list = _tablescan_reference_segment<Type>(reference_segment, chunk_id);
       }
     }
   });
@@ -76,28 +64,98 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
 }
 
 template <typename T>
-std::function<bool(T, T)> TableScan::_create_scan_operation() const {
-  switch (scan_type()) {
+std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<DictionarySegment<T>> segment, ChunkID chunk_id) {
+  auto position_list = std::make_shared<PosList>();
+  const auto search_val = type_cast<T>(_search_value);
+
+  // Not comparing the individual types anymore, only indexes now.
+  auto scan_op = _create_scan_operation<ValueID>();
+
+  const auto lower_bound = segment->lower_bound(search_val);
+  const auto upper_bound = segment->upper_bound(search_val);
+
+  switch (_scan_type) {
+    /**
+     * Upper Bound is exclusive ==> [minElement, upperBound)
+     * Lower Bound is inclusive ==> [lowerBound, maxElement]
+     * 
+     * Therefore, if they match, there is no matching element with the search value.
+     */ 
     case ScanType::OpEquals:
-      return [](auto left_operand, auto right_operand) { return left_operand == right_operand; };
+      if (lower_bound == upper_bound) scan_op = [](auto l, auto r) { return false; };
+      break;
+    case ScanType::OpNotEquals:
+      if (lower_bound == upper_bound) scan_op = [](auto l, auto r) { return true; };
+      break;
+    // Rest stays as it is.
+    case ScanType::OpLessThan:
+      break;
+    case ScanType::OpLessThanEquals:
+      break;
+    case ScanType::OpGreaterThan:
+      break;
+    case ScanType::OpGreaterThanEquals:
+      break;
+  }
+
+  const auto attr_vector = segment->attribute_vector();
+  for (auto value_ind = ChunkOffset{0}; value_ind < segment->size(); ++value_ind) {
+    if (scan_op(attr_vector->get(value_ind), lower_bound)) {
+      position_list->push_back(RowID{chunk_id, value_ind});
+    }
+  }
+
+  return position_list;
+}
+
+template <typename T>
+std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<ValueSegment<T>> segment, ChunkID chunk_id) {
+  const auto scan_op = _create_scan_operation<T>();
+  const auto values = segment->values();
+
+  auto position_list = std::make_shared<PosList>();
+  const auto search_val = type_cast<T>(_search_value);
+
+  for (const auto& value : values) {
+    if (scan_op(value, search_val)) {
+      position_list->push_back(RowID{chunk_id, _column_id});
+    }
+  }
+
+  return position_list;
+}
+
+template <typename T>
+std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr<ReferenceSegment> segment, ChunkID chunk_id) {
+  auto position_list = std::make_shared<PosList>();
+
+  return nullptr;
+}
+
+
+template <typename T>
+std::function<bool(T, T)> TableScan::_create_scan_operation() const {
+  switch (_scan_type) {
+    case ScanType::OpEquals:
+      return [](auto l, auto r) { return l == r; };
 
     case ScanType::OpNotEquals:
-      return [](auto left_operand, auto right_operand) { return left_operand != right_operand; };
+      return [](auto l, auto r) { return l != r; };
 
     case ScanType::OpLessThan:
-      return [](auto left_operand, auto right_operand) { return left_operand < right_operand; };
+      return [](auto l, auto r) { return l < r; };
 
     case ScanType::OpLessThanEquals:
-      return [](auto left_operand, auto right_operand) { return left_operand <= right_operand; };
+      return [](auto l, auto r) { return l <= r; };
 
     case ScanType::OpGreaterThan:
-      return [](auto left_operand, auto right_operand) { return left_operand > right_operand; };
+      return [](auto l, auto r) { return l > r; };
 
     case ScanType::OpGreaterThanEquals:
-      return [](auto left_operand, auto right_operand) { return left_operand >= right_operand; };
+      return [](auto l, auto r) { return l >= r; };
 
     default:
-      Fail("Invalid Scan Operation.");
+      Fail("Scan Operation not available.");
       break;
   }
 }
