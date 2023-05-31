@@ -121,9 +121,10 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
   }
 
   const auto attr_vector = segment->attribute_vector();
-  for (auto value_ind = ChunkOffset{0}; value_ind < segment->size(); ++value_ind) {
-    if (attr_vector->get(value_ind) != segment->null_value_id() && scan_op(attr_vector->get(value_ind), lower_bound)) {
-      position_list->push_back(RowID{chunk_id, value_ind});
+  for (auto index = ChunkOffset{0}; index < segment->size(); ++index) {
+    const auto value_id = attr_vector->get(index);
+    if (value_id != segment->null_value_id() && scan_op(value_id, lower_bound)) {
+      position_list->push_back(RowID{chunk_id, index});
     }
   }
 
