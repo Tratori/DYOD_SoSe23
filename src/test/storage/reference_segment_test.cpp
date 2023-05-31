@@ -50,6 +50,19 @@ TEST_F(ReferenceSegmentTest, RetrievesValues) {
   EXPECT_EQ(reference_segment[2], segment[2]);
 }
 
+TEST_F(ReferenceSegmentTest, Getter) {
+  // PosList with (0, 0), (0, 1), (0, 2)
+  auto pos_list = std::make_shared<PosList>(
+      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{0}, 1}, RowID{ChunkID{0}, 2}}));
+  auto reference_segment = ReferenceSegment(_test_table, ColumnID{0}, pos_list);
+
+  EXPECT_EQ(reference_segment.referenced_table(), _test_table);
+  EXPECT_EQ(reference_segment.referenced_column_id(), 0);
+  EXPECT_EQ(reference_segment.pos_list(), pos_list);
+  EXPECT_EQ(reference_segment.size(), pos_list->size());
+  EXPECT_EQ(reference_segment.estimate_memory_usage(), 3 * 8 );
+}
+
 TEST_F(ReferenceSegmentTest, RetrievesValuesOutOfOrder) {
   // PosList with (0, 1), (0, 2), (0, 0)
   auto pos_list = std::make_shared<PosList>(
