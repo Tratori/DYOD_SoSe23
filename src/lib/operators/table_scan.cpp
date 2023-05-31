@@ -26,7 +26,6 @@ const AllTypeVariant& TableScan::search_value() const {
 
 std::shared_ptr<const Table> TableScan::_on_execute() {
   const auto input_table = _left_input_table();
-  const auto comparitor = _search_value;
 
   // TODO(Robert): What if last operator does not return anything?
   Assert(input_table, "Performing a table scan without input does not work.");
@@ -61,6 +60,17 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       
         default:
           Fail("Scan type not defined.");
+      }
+
+      if (value_segment) {
+        const auto values = value_segment->values();
+        for (const auto& value : values) {
+          if (op(value, _search_value)) {
+            // Add to table
+          }
+        }
+      } else if (dictionary_segment) {
+
       }
     }
   });
