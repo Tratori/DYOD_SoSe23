@@ -140,12 +140,12 @@ std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<Val
   auto position_list = std::make_shared<PosList>();
   const auto search_val = type_cast<T>(_search_value);
 
-  auto value_ind = ChunkOffset{0};
+  auto index = ChunkOffset{0};
   for (const auto& value : values) {
-    if (!segment->is_null(value_ind) && scan_op(value, search_val)) {
-      position_list->push_back(RowID{chunk_id, value_ind});
+    if (!segment->is_null(index) && scan_op(value, search_val)) {
+      position_list->push_back(RowID{chunk_id, index});
     }
-    ++value_ind;
+    ++index;
   }
 
   return position_list;
