@@ -283,4 +283,22 @@ TEST_F(OperatorsTableScanTest, ScanOnReferenceSegmentWithNullValue) {
   }
 }
 
+TEST_F(OperatorsTableScanTest, ScanWithNullAsSearchValue) {
+  auto tests = std::map<ScanType, std::vector<AllTypeVariant>>{};
+  tests[ScanType::OpEquals] = {};
+  tests[ScanType::OpNotEquals] = {};
+  tests[ScanType::OpLessThan] = {};
+  tests[ScanType::OpLessThanEquals] = {};
+  tests[ScanType::OpGreaterThan] = {};
+  tests[ScanType::OpGreaterThanEquals] = {};
+
+  for (const auto& test : tests) {
+    auto scan_1 =
+        std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0}, ScanType::OpGreaterThan, NULL_VALUE);
+    scan_1->execute();
+
+    ASSERT_COLUMN_EQ(scan_1->get_output(), ColumnID{1}, test.second);
+  }
+}
+
 }  // namespace opossum
