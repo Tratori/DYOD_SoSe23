@@ -30,7 +30,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   // TODO(Robert): What if last operator does not return anything?
   Assert(input_table, "Performing a table scan without input does not work.");
   const auto chunk_count = input_table->chunk_count();
-  auto const column_type = input_table->column_type(_column_id);
+  const auto column_type = input_table->column_type(_column_id);
   auto output_reference_segments = std::vector<std::shared_ptr<ReferenceSegment>>{};
 
   // any comparison with null will always return an empty set
