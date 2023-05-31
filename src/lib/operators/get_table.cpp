@@ -9,8 +9,8 @@ const std::string& GetTable::table_name() const {
 }
 
 std::shared_ptr<const Table> GetTable::_on_execute() {
-  StorageManager& storageManager = StorageManager::get();
-  Assert(storageManager.has_table(_table_name), "Table " + _table_name + " does not exist");
-  return storageManager.get_table(_table_name);
+auto storageManager = &StorageManager::get();
+  Assert(storageManager->has_table(_table_name), "Table " + _table_name + " does not exist");
+  return storageManager->get_table(_table_name);
 }
 }  // namespace opossum
