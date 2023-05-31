@@ -88,20 +88,19 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
      */
     case ScanType::OpEquals:
       if (lower_bound == upper_bound)
-        scan_op = [](auto l, auto r) { return false; };
-      break;
+        return position_list;
     case ScanType::OpNotEquals:
       if (lower_bound == upper_bound)
         scan_op = [](auto l, auto r) { return true; };
       break;
-    // Rest stays as it is.
-    case ScanType::OpLessThan:
-      break;
     case ScanType::OpLessThanEquals:
+      scan_op = [&](auto l, auto r) { return l < upper_bound; };
       break;
     case ScanType::OpGreaterThan:
+      scan_op = [&](auto l, auto r) { return l >= upper_bound; };
       break;
-    case ScanType::OpGreaterThanEquals:
+      // Rest stays as it is.
+    default:
       break;
   }
 
