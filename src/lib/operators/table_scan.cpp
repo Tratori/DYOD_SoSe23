@@ -11,7 +11,7 @@ namespace opossum {
 
 TableScan::TableScan(const std::shared_ptr<const AbstractOperator>& in, const ColumnID column_id,
                      const ScanType scan_type, const AllTypeVariant search_value)
-    : _column_id{column_id}, _scan_type{scan_type}, _search_value{search_value} {}
+    : AbstractOperator{in}, _column_id{column_id}, _scan_type{scan_type}, _search_value{search_value} {}
 
 ColumnID TableScan::column_id() const {
   return _column_id;
@@ -65,11 +65,9 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
         }
       } else if (dictionary_segment) {
       }
-      //auto result_chunk = ReferenceSegment(input_table, _column_id, );
     }
   });
 
-  //Table test = Table(input_table, output_reference_segments);
   return std::make_shared<Table>(*input_table, output_reference_segments);
 }
 
