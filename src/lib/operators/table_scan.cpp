@@ -161,8 +161,8 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
   const auto search_val = type_cast<T>(search_value());
   const auto scan_op = _create_scan_operation<T>();
 
-  for (auto value_index = ChunkOffset{0}; value_index < segment->size(); ++value_index) {
-    const auto row = (*input_position_list)[value_index];
+  for (auto index = ChunkOffset{0}; index < segment->size(); ++index) {
+    const auto row = (*input_position_list)[index];
     const auto chunk = table->get_chunk(row.chunk_id);
     const auto target_segment = chunk->get_segment(_column_id);
 
@@ -180,7 +180,7 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
       const auto casted_value = type_cast<T>(values[row.chunk_offset]);
 
       if (scan_op(casted_value, search_val)) {
-        position_list->emplace_back(input_position_list->operator[](value_index));
+        position_list->emplace_back((*input_position_list)[index]);
       }
     } else if (dict_segment) {
       const auto& attribute_vector = dict_segment->attribute_vector();
@@ -193,7 +193,7 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
       const auto casted_value = type_cast<T>(value);
 
       if (scan_op(casted_value, search_val)) {
-        position_list->emplace_back(input_position_list->operator[](value_index));
+        position_list->emplace_back((*input_position_list)[index]);
       }
     }
   }
