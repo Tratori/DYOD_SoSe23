@@ -9,6 +9,7 @@ AbstractOperator::AbstractOperator(const std::shared_ptr<const AbstractOperator>
 
 void AbstractOperator::execute() {
   _output = _on_execute();
+  Assert(_output, "No output Table was returned after operator execution.");
   _was_executed = true;
 }
 

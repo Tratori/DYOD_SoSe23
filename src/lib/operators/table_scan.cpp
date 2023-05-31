@@ -27,7 +27,6 @@ const AllTypeVariant& TableScan::search_value() const {
 std::shared_ptr<const Table> TableScan::_on_execute() {
   const auto input_table = _left_input_table();
 
-  // TODO(Robert): What if last operator does not return anything?
   Assert(input_table, "Performing a table scan without input does not work.");
   const auto chunk_count = input_table->chunk_count();
   const auto column_type = input_table->column_type(_column_id);
@@ -38,18 +37,20 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
     return std::make_shared<Table>(*input_table, output_reference_segments);
   }
 
+  // We might end up using far less segments, but still should be worth to reserve the space for worst case.
   output_reference_segments.reserve(chunk_count);
 
   resolve_data_type(column_type, [&](auto type) {
     using Type = typename decltype(type)::type;
 
     for (auto chunk_id = ChunkID{0}; chunk_id < chunk_count; ++chunk_id) {
-      auto position_list = std::make_shared<PosList>();
       const auto chunk = input_table->get_chunk(chunk_id);
       // if chunk is empty, skip this chunk
       if (!chunk->size()) {
         continue;
       }
+
+      auto position_list = std::make_shared<PosList>();
       const auto segment = chunk->get_segment(_column_id);
 
       const auto value_segment = std::dynamic_pointer_cast<ValueSegment<Type>>(segment);
@@ -68,6 +69,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       }
 
       if (!position_list->empty()) {
+        // Only keep non empty segments and change referred table, if we scanned a ReferenceSegment.
         output_reference_segments.push_back(std::make_shared<ReferenceSegment>(
             (reference_segment) ? reference_segment->referenced_table() : input_table, _column_id, position_list));
       }
@@ -95,6 +97,8 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
      * Lower Bound is inclusive ==> [lowerBound, maxElement]
      *
      * Therefore, if they match, there is no matching element with the search value.
+     * As we are gonna compare with the valueID and not the actual value, some other
+     * operators also need to be overwritten, to work accordingly.
      */
     case ScanType::OpEquals:
       if (lower_bound == upper_bound) {
