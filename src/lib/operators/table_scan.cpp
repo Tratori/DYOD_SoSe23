@@ -113,7 +113,7 @@ std::shared_ptr<PosList> TableScan::_tablescan_dict_segment(std::shared_ptr<Dict
 
   const auto attr_vector = segment->attribute_vector();
   for (auto value_ind = ChunkOffset{0}; value_ind < segment->size(); ++value_ind) {
-    if (scan_op(attr_vector->get(value_ind), lower_bound)) {
+    if (attr_vector->get(value_ind) != segment->null_value_id() && scan_op(attr_vector->get(value_ind), lower_bound)) {
       position_list->push_back(RowID{chunk_id, value_ind});
     }
   }
@@ -163,7 +163,7 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
       const auto values = val_segment->values();
       const auto casted_value = type_cast<T>(values[row.chunk_offset]);
 
-      if (scan_op(casted_value, search_val)) {
+      if (!val_segment->is_null(row.chunk_offset) && scan_op(casted_value, search_val)) {
         position_list->emplace_back(input_position_list->operator[](value_index));
       }
     } else if (dict_segment) {
@@ -171,7 +171,8 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
       const auto value = dict_segment->value_of_value_id(attribute_vector->get(row.chunk_offset));
       const auto casted_value = type_cast<T>(value);
 
-      if (scan_op(casted_value, search_val)) {
+      if (attribute_vector->get(row.chunk_offset) != dict_segment->null_value_id() &&
+          scan_op(casted_value, search_val)) {
         position_list->emplace_back(input_position_list->operator[](value_index));
       }
     }
