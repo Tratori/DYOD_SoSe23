@@ -32,6 +32,12 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   const auto chunk_count = input_table->chunk_count();
   auto const column_type = input_table->column_type(_column_id);
   auto output_reference_segments = std::vector<std::shared_ptr<ReferenceSegment>>{};
+
+  // any comparison with null will always return an empty set
+  if (variant_is_null(_search_value)) {
+    return std::make_shared<Table>(*input_table, output_reference_segments);
+  }
+
   output_reference_segments.reserve(chunk_count);
 
   resolve_data_type(column_type, [&](auto type) {
@@ -59,7 +65,8 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
       }
 
       if (!position_list->empty()) {
-        output_reference_segments.push_back(std::make_shared<ReferenceSegment>(input_table, _column_id, position_list));
+        output_reference_segments.push_back(std::make_shared<ReferenceSegment>(
+            (reference_segment) ? reference_segment->referenced_table() : input_table, _column_id, position_list));
       }
     }
   });
@@ -125,7 +132,7 @@ std::shared_ptr<PosList> TableScan::_tablescan_value_segment(std::shared_ptr<Val
 
   auto value_ind = ChunkOffset{0};
   for (const auto& value : values) {
-    if (scan_op(value, search_val)) {
+    if (!segment->is_null(value_ind) && scan_op(value, search_val)) {
       position_list->push_back(RowID{chunk_id, value_ind});
     }
     ++value_ind;
@@ -148,8 +155,6 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
     const auto row = (*input_position_list)[value_index];
     const auto chunk = table->get_chunk(row.chunk_id);
     const auto target_segment = chunk->get_segment(_column_id);
-
-    std::shared_ptr<PosList> pos_list;
 
     const auto dict_segment = std::dynamic_pointer_cast<DictionarySegment<T>>(target_segment);
     const auto val_segment = std::dynamic_pointer_cast<ValueSegment<T>>(target_segment);
