@@ -30,6 +30,10 @@ Table::Table(const Table& other_table, const std::vector<std::shared_ptr<Referen
     }
     _chunks.push_back(output_chunk);
   }
+  // add empty chunk, incase no ReferenceSegments were passed
+  if (number_chunks == 0) {
+    _chunks.push_back(std::make_shared<Chunk>());
+  }
 }
 
 void Table::add_column_definition(const std::string& name, const std::string& type, const bool nullable) {

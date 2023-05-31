@@ -41,6 +41,10 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
     for (auto chunk_id = ChunkID{0}; chunk_id < chunk_count; ++chunk_id) {
       auto position_list = std::make_shared<PosList>();
       const auto chunk = input_table->get_chunk(chunk_id);
+      // if chunk is empty, skip this chunk
+      if (!chunk->size()) {
+        continue;
+      }
       const auto segment = chunk->get_segment(_column_id);
 
       const auto value_segment = std::dynamic_pointer_cast<ValueSegment<Type>>(segment);
