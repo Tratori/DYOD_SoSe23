@@ -36,8 +36,9 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
 
   resolve_data_type(column_type, [&](auto type) {
     using Type = typename decltype(type)::type;
+
+    auto position_list = std::make_shared<PosList>();
     for (auto chunk_id = ChunkID{0}; chunk_id < chunk_count; ++chunk_id) {
-      auto position_list = PosList();
       const auto chunk = input_table->get_chunk(chunk_id);
       const auto segment = chunk->get_segment(_column_id);
 
@@ -53,7 +54,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
           const auto search_val = type_cast<Type>(_search_value);
 
           if (scan_op(value, search_val)) {
-            position_list.push_back(RowID{chunk_id, _column_id});
+            position_list->push_back(RowID{chunk_id, _column_id});
           }
         }
       } else if (dictionary_segment) {
