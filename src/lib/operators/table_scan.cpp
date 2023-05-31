@@ -170,19 +170,27 @@ std::shared_ptr<PosList> TableScan::_tablescan_reference_segment(std::shared_ptr
     const auto val_segment = std::dynamic_pointer_cast<ValueSegment<T>>(target_segment);
 
     if (val_segment) {
+      // If value is null, it cannot appear in result set, so just continue.
+      if (val_segment->is_null(row.chunk_offset)) {
+        continue;
+      }
       const auto values = val_segment->values();
       const auto casted_value = type_cast<T>(values[row.chunk_offset]);
 
-      if (!val_segment->is_null(row.chunk_offset) && scan_op(casted_value, search_val)) {
+      if (scan_op(casted_value, search_val)) {
         position_list->emplace_back(input_position_list->operator[](value_index));
       }
     } else if (dict_segment) {
       const auto& attribute_vector = dict_segment->attribute_vector();
-      const auto value = dict_segment->value_of_value_id(attribute_vector->get(row.chunk_offset));
+      const auto value_id = attribute_vector->get(row.chunk_offset);
+      // If value is null, it cannot appear in result set, so just continue.
+      if (value_id == dict_segment->null_value_id()) {
+        continue;
+      }
+      const auto value = dict_segment->value_of_value_id(value_id);
       const auto casted_value = type_cast<T>(value);
 
-      if (attribute_vector->get(row.chunk_offset) != dict_segment->null_value_id() &&
-          scan_op(casted_value, search_val)) {
+      if (scan_op(casted_value, search_val)) {
         position_list->emplace_back(input_position_list->operator[](value_index));
       }
     }
