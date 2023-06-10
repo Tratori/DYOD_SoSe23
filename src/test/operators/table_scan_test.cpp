@@ -95,6 +95,10 @@ TEST_F(OperatorsTableScanTest, DoubleScan) {
   auto expected_result = load_table("src/test/tables/int_float_filtered.tbl", 2);
 
   auto scan_1 = std::make_shared<TableScan>(_table_wrapper, ColumnID{0}, ScanType::OpGreaterThanEquals, 1234);
+
+  EXPECT_EQ(scan_1->column_id(), ColumnID{0});
+  EXPECT_EQ(scan_1->scan_type(), ScanType::OpGreaterThanEquals);
+
   scan_1->execute();
 
   auto scan_2 = std::make_shared<TableScan>(scan_1, ColumnID{1}, ScanType::OpLessThan, 457.9);
@@ -280,6 +284,24 @@ TEST_F(OperatorsTableScanTest, ScanOnReferenceSegmentWithNullValue) {
     scan_2->execute();
 
     ASSERT_COLUMN_EQ(scan_2->get_output(), ColumnID{1}, test.second);
+  }
+}
+
+TEST_F(OperatorsTableScanTest, ScanWithNullAsSearchValue) {
+  auto tests = std::map<ScanType, std::vector<AllTypeVariant>>{};
+  tests[ScanType::OpEquals] = {};
+  tests[ScanType::OpNotEquals] = {};
+  tests[ScanType::OpLessThan] = {};
+  tests[ScanType::OpLessThanEquals] = {};
+  tests[ScanType::OpGreaterThan] = {};
+  tests[ScanType::OpGreaterThanEquals] = {};
+
+  for (const auto& test : tests) {
+    auto scan_1 =
+        std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0}, ScanType::OpGreaterThan, NULL_VALUE);
+    scan_1->execute();
+
+    ASSERT_COLUMN_EQ(scan_1->get_output(), ColumnID{1}, test.second);
   }
 }
 

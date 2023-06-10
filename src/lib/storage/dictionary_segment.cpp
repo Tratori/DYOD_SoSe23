@@ -20,12 +20,15 @@ template <typename T>
 void DictionarySegment<T>::initialize_attributes_vector(const size_t distinct_values_count, const size_t values_count) {
   DebugAssert(values_count >= distinct_values_count, "Distinct count may not be greater than values count.");
 
-  if (distinct_values_count - 1 <= std::numeric_limits<u_int8_t>::max()) {
+  if (distinct_values_count - 1 <= std::numeric_limits<u_int8_t>::max() || distinct_values_count == 0) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int8_t>>(values_count);
   } else if (distinct_values_count - 1 <= std::numeric_limits<u_int16_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int16_t>>(values_count);
   } else if (distinct_values_count - 1 <= std::numeric_limits<u_int32_t>::max()) {
     _attribute_vector = std::make_shared<FixedWidthIntegerVector<u_int32_t>>(values_count);
+  } else {
+    throw std::logic_error("Can not create attribute vector that stores " + std::to_string(distinct_values_count) +
+                           " different values.");
   }
 }
 

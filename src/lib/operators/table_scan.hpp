@@ -1,6 +1,9 @@
 #pragma once
 
 #include "abstract_operator.hpp"
+#include "all_type_variant.hpp"
+#include "storage/dictionary_segment.hpp"
+#include "storage/reference_segment.hpp"
 #include "utils/assert.hpp"
 
 namespace opossum {
@@ -8,30 +11,29 @@ namespace opossum {
 class TableScan : public AbstractOperator {
  public:
   TableScan(const std::shared_ptr<const AbstractOperator>& in, const ColumnID column_id, const ScanType scan_type,
-            const AllTypeVariant search_value) {
-    // TODO(student) implement it in a source file and change this to a declaration.
-  }
+            const AllTypeVariant search_value);
 
-  ColumnID column_id() const {
-    // TODO(student) implement it in a source file and change this to a declaration.
-    Fail("Implementation missing.");
-  }
+  ColumnID column_id() const;
 
-  ScanType scan_type() const {
-    // TODO(student) implement it in a source file and change this to a declaration.
-    Fail("Implementation missing.");
-  }
+  ScanType scan_type() const;
 
-  const AllTypeVariant& search_value() const {
-    // TODO(student) implement it in a source file and change this to a declaration.
-    Fail("Implementation missing.");
-  }
+  const AllTypeVariant& search_value() const;
 
  protected:
-  std::shared_ptr<const Table> _on_execute() override {
-    // TODO(student) implement it in a source file and change this to a declaration.
-    Fail("Implementation missing.");
-  }
+  template <typename T>
+  std::function<bool(T, T)> _create_scan_operation() const;
+
+  template <typename T>
+  std::shared_ptr<PosList> _tablescan_dict_segment(std::shared_ptr<DictionarySegment<T>> segment, ChunkID chunk_id);
+  template <typename T>
+  std::shared_ptr<PosList> _tablescan_value_segment(std::shared_ptr<ValueSegment<T>> segment, ChunkID chunk_id);
+  template <typename T>
+  std::shared_ptr<PosList> _tablescan_reference_segment(std::shared_ptr<ReferenceSegment> segment, ChunkID chunk_id);
+
+  std::shared_ptr<const Table> _on_execute() override;
+  ColumnID _column_id;
+  ScanType _scan_type;
+  AllTypeVariant _search_value;
 };
 
 }  // namespace opossum

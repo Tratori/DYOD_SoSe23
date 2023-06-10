@@ -1,4 +1,5 @@
 #include "abstract_operator.hpp"
+#include "utils/assert.hpp"
 
 namespace opossum {
 
@@ -8,11 +9,12 @@ AbstractOperator::AbstractOperator(const std::shared_ptr<const AbstractOperator>
 
 void AbstractOperator::execute() {
   _output = _on_execute();
+  Assert(_output, "No output Table was returned after operator execution.");
+  _was_executed = true;
 }
 
 std::shared_ptr<const Table> AbstractOperator::get_output() const {
-  // TODO(student): You should place some meaningful checks here
-
+  Assert(_was_executed, "Output of Operator requested, that was not yet executed.");
   return _output;
 }
 

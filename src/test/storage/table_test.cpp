@@ -29,8 +29,8 @@ TEST_F(StorageTableTest, GetChunk) {
   table.append({3, "!"});
   table.get_chunk(ChunkID{1});
   const auto chunk = table.get_chunk(ChunkID{0});
-  EXPECT_EQ(chunk->size(), 2);
   EXPECT_THROW(table.get_chunk(ChunkID{7}), std::logic_error);
+  EXPECT_EQ(chunk->size(), 2);
 }
 
 TEST_F(StorageTableTest, ColumnCount) {

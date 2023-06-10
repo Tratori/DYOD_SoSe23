@@ -1,5 +1,6 @@
 #include <thread>
 
+#include "algorithm"
 #include "dictionary_segment.hpp"
 #include "resolve_type.hpp"
 #include "table.hpp"
@@ -10,6 +11,36 @@ namespace opossum {
 Table::Table(const ChunkOffset target_chunk_size) {
   _target_chunk_size = target_chunk_size;
   _chunks = std::vector<std::shared_ptr<Chunk>>{std::make_shared<Chunk>()};
+}
+
+Table::Table(const Table& other_table, const std::vector<std::shared_ptr<ReferenceSegment>>& reference_segments)
+    : _column_names{other_table._column_names},
+      _column_types{other_table._column_types},
+      _column_nullable{other_table._column_nullable},
+      _target_chunk_size{other_table._target_chunk_size} {
+  const auto number_chunks = reference_segments.size();
+  _chunks.reserve(number_chunks);
+
+  const auto column_count = other_table.column_count();
+  for (auto chunk_id = ChunkID{0}; chunk_id < number_chunks; ++chunk_id) {
+    auto output_chunk = std::make_shared<Chunk>();
+    for (auto column_id = ColumnID{0}; column_id < column_count; ++column_id) {
+      output_chunk->add_segment(std::make_shared<ReferenceSegment>(
+          reference_segments[chunk_id]->referenced_table(), column_id, reference_segments[chunk_id]->pos_list()));
+    }
+    _chunks.push_back(output_chunk);
+  }
+  // add empty chunk, incase no ReferenceSegments were passed
+  if (number_chunks == 0) {
+    auto output_chunk = std::make_shared<Chunk>();
+    for (auto column_id = ColumnID{0}; column_id < column_count; ++column_id) {
+      resolve_data_type(_column_types[column_id], [&](const auto data_type_t) {
+        using ColumnDataType = typename decltype(data_type_t)::type;
+        output_chunk->add_segment(std::make_shared<ValueSegment<ColumnDataType>>());
+      });
+    }
+    _chunks.push_back(output_chunk);
+  }
 }
 
 void Table::add_column_definition(const std::string& name, const std::string& type, const bool nullable) {

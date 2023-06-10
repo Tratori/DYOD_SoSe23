@@ -2,6 +2,7 @@
 
 #include "abstract_segment.hpp"
 #include "chunk.hpp"
+#include "reference_segment.hpp"
 #include "type_cast.hpp"
 
 namespace opossum {
@@ -14,6 +15,12 @@ class Table : private Noncopyable {
   // Creates a table. The parameter specifies the maximum chunk size, i.e., partition size default is the maximum chunk
   // size minus 1. A table always holds at least one chunk.
   explicit Table(const ChunkOffset target_chunk_size = std::numeric_limits<ChunkOffset>::max() - 1);
+
+  // Copies the definition of the other table and resolves reference_segments, so that a new chunk is created for each
+  // given reference_segment.
+  // NOTE: This only works, if each row's values are stored in the same table (e.g. if there are different
+  // columns within one Chunk, consisting of ReferenceSegments, that reference to different tables, this breaks)
+  Table(const Table& other_table, const std::vector<std::shared_ptr<ReferenceSegment>>& reference_segments);
 
   // Returns the number of columns (cannot exceed ColumnID (uint16_t)).
   ColumnCount column_count() const;
